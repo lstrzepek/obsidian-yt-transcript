@@ -30,13 +30,13 @@ export class TranscriptView extends ItemView {
     contentEl.empty();
     contentEl.createEl("h4", { text: "Transcript" });
   }
-  setEphemeralState({ url }: any): void {
+  setEphemeralState({ url, timestampMod }: any): void {
     YoutubeTranscript.fetchTranscript(url)
       .then(data => {
         var div = createEl('div');
 
         data.forEach((line, i) => {
-          if (i % 32 == 0) {
+          if (i % timestampMod == 0) {
             div = createEl('div');
             const button = createEl('button', { cls: "timestamp", attr: { "data-timestamp": line.offset.toFixed() } });
             button.innerText = formatTimestamp(line.offset);
