@@ -4,12 +4,12 @@ import YoutubeTranscript from "youtube-transcript";
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 const formatTimestamp = (t: number): string => {
   const fnum = (n: number) => (n && n < 10) ? "0" + n.toFixed() : n.toFixed();
-  const h = 3600 * 1000;
+  const s = 1000;
+  const m = 60 * s;
+  const h = 60 * m;
   const hours = Math.floor(t / h);
-  const m = 60 * 1000;
   const minutes = Math.floor((t - hours * h) / m);
-  const ms = 1000;
-  const seconds = Math.floor((t - minutes * m) / ms);
+  const seconds = Math.floor((t - minutes * m) / s);
   const time = hours ? [hours, minutes, seconds] : [minutes, seconds];
   return time.map(fnum).join(':')
 }
@@ -39,7 +39,9 @@ export class TranscriptView extends ItemView {
           if (i % timestampMod == 0) {
             div = createEl('div');
             const button = createEl('button', { cls: "timestamp", attr: { "data-timestamp": line.offset.toFixed() } });
-            button.innerText = formatTimestamp(line.offset);
+            const link = createEl('a', { text: formatTimestamp(line.offset), attr: { "href": url + '&t=' + Math.floor(line.offset / 1000) } });
+            button.appendChild(link);
+            // button.innerText = formatTimestamp(line.offset);
             const span = this.contentEl.createEl('span', { cls: "transcript-line", text: line.text + " " });
             div.appendChild(button);
             div.appendChild(span);
