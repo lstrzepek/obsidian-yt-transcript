@@ -13,14 +13,14 @@ const DEFAULT_SETTINGS: YTranscriptSettings = {
   country: 'EN'
 }
 
-export default class YTranscript extends Plugin {
+export default class YTranscriptPlugin extends Plugin {
   settings: YTranscriptSettings;
 
   async onload() {
     await this.loadSettings();
 
     this.registerView(TRANSCRIPT_TYPE_VIEW,
-      (leaf) => new TranscriptView(leaf));
+      (leaf) => new TranscriptView(leaf, this));
 
     this.addCommand({
       id: 'fetch-transcript',
@@ -62,14 +62,14 @@ export default class YTranscript extends Plugin {
 }
 
 class YTranslateSettingTab extends PluginSettingTab {
-  plugin: YTranscript;
+  plugin: YTranscriptPlugin;
   values: Record<string, string>;
 
 
   /**
    *
    */
-  constructor(app: App, plugin: YTranscript) {
+  constructor(app: App, plugin: YTranscriptPlugin) {
     super(app, plugin);
     this.plugin = plugin;
     const v = [...Array(99).keys()];
