@@ -1,5 +1,6 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
-import YoutubeTranscript from "youtube-transcript";
+import YTranscriptPlugin from "main";
+import { ItemView, WorkspaceLeaf, App } from "obsidian";
+import YoutubeTranscript, { TranscriptResponse } from "youtube-transcript";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 const formatTimestamp = (t: number): string => {
@@ -14,9 +15,10 @@ const formatTimestamp = (t: number): string => {
   return time.map(fnum).join(':')
 }
 export class TranscriptView extends ItemView {
-
-  constructor(leaf: WorkspaceLeaf) {
+  plugin: YTranscriptPlugin;
+  constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
     super(leaf);
+    this.plugin = plugin;
   }
 
   getViewType(): string {
@@ -25,14 +27,36 @@ export class TranscriptView extends ItemView {
   getDisplayText(): string {
     return "Transcript";
   }
+  getIcon(): string {
+    return "scroll";
+  }
   protected async onOpen(): Promise<void> {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.createEl("h4", { text: "Transcript" });
   }
+
+  createTextLine(line: TranscriptResponse): HTMLSpanElement {
+    const span = this.contentEl.createEl('span', { cls: "transcript-line", text: line.text + " " });
+    span.setAttr('draggable', 'true');
+    span.addEventListener('dragstart', (event: DragEvent) => {
+      const dragManager = (this.app as any).dragManager;
+      console.log(dragManager);
+      const dragData = dragManager.dragLink(event, line.text);
+      dragManager.onDragStart(event, dragData);
+    });
+    return span;
+  }
+
   setEphemeralState({ url, timestampMod, lang, country }: any): void {
     YoutubeTranscript.fetchTranscript(url, { lang, country })
       .then(data => {
+        if (!data) {
+          this.contentEl.empty();
+          this.contentEl.createEl('h4', { text: "No transcript found" });
+          this.contentEl.createEl('div', { text: "Please check if video contains any transcript or try adjust language and country in plugin settings." });
+          return;
+        }
         var div = createEl('div');
 
         data.forEach((line, i) => {
@@ -41,18 +65,21 @@ export class TranscriptView extends ItemView {
             const button = createEl('button', { cls: "timestamp", attr: { "data-timestamp": line.offset.toFixed() } });
             const link = createEl('a', { text: formatTimestamp(line.offset), attr: { "href": url + '&t=' + Math.floor(line.offset / 1000) } });
             button.appendChild(link);
-            // button.innerText = formatTimestamp(line.offset);
-            const span = this.contentEl.createEl('span', { cls: "transcript-line", text: line.text + " " });
+            const span = this.createTextLine(line);
             div.appendChild(button);
             div.appendChild(span);
             this.contentEl.appendChild(div);
           }
           else {
-
-            const span = this.contentEl.createEl('span', { cls: "transcript-line", text: line.text + " " });
+            const span = this.createTextLine(line);
             div.appendChild(span);
           }
         })
+      }).catch(err => {
+        this.contentEl.empty();
+        this.contentEl.createEl('h4', { text: "Error" });
+        this.contentEl.createEl('div', { text: err });
+        return;
       });
   }
 }
