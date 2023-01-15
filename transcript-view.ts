@@ -30,8 +30,8 @@ export class TranscriptView extends ItemView {
     contentEl.empty();
     contentEl.createEl("h4", { text: "Transcript" });
   }
-  setEphemeralState({ url, timestampMod }: any): void {
-    YoutubeTranscript.fetchTranscript(url)
+  setEphemeralState({ url, timestampMod, lang, country }: any): void {
+    YoutubeTranscript.fetchTranscript(url, { lang, country })
       .then(data => {
         var div = createEl('div');
 

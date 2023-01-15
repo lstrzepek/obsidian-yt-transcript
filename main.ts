@@ -3,10 +3,14 @@ import { TranscriptView, TRANSCRIPT_TYPE_VIEW } from 'transcript-view';
 
 interface YTranscriptSettings {
   timestampMod: number;
+  lang: string;
+  country: string;
 }
 
 const DEFAULT_SETTINGS: YTranscriptSettings = {
-  timestampMod: 32
+  timestampMod: 32,
+  lang: 'en',
+  country: 'EN'
 }
 
 export default class YTranscript extends Plugin {
@@ -28,7 +32,6 @@ export default class YTranscript extends Plugin {
     });
 
     this.addSettingTab(new YTranslateSettingTab(this.app, this));
-    // this.addRibbonIcon('eye','Boo!',e=>{});
   }
 
   async openView(url: string) {
@@ -39,7 +42,9 @@ export default class YTranscript extends Plugin {
     this.app.workspace.revealLeaf(leaf);
     leaf.setEphemeralState({
       url,
-      timestampMod: this.settings.timestampMod
+      timestampMod: this.settings.timestampMod,
+      lang: this.settings.lang,
+      country: this.settings.country
     });
   }
 
@@ -87,5 +92,26 @@ class YTranslateSettingTab extends PluginSettingTab {
           this.plugin.settings.timestampMod = Number.parseInt(value);
           await this.plugin.saveSettings();
         }));
+
+    new Setting(containerEl)
+      .setName('Language')
+      .setDesc('Prefered transcript language')
+      .addText(text => text
+        .setValue(this.plugin.settings.lang)
+        .onChange(async (value) => {
+          this.plugin.settings.lang = value;
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName('Country')
+      .setDesc('Prefered transcript country code')
+      .addText(text => text
+        .setValue(this.plugin.settings.country)
+        .onChange(async (value) => {
+          this.plugin.settings.country = value;
+          await this.plugin.saveSettings();
+        }));
+
   }
 }
