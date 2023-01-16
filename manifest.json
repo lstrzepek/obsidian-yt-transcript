@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-ytranscript",
 	"name": "YTranscript",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"minAppVersion": "0.15.0",
 	"description": "This is simple plugin to fetch transcription for Youtube.",
 	"author": "Łukasz Strzępek",
