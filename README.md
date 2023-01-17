@@ -7,3 +7,9 @@
 6. You can drag and drop lines of transcription or timestamp link
 
 ![YTranscriptPlugin2](https://user-images.githubusercontent.com/185352/212565518-3afc897a-84f1-479c-b588-cd35dd8b6cd3.gif)
+
+# Acknowledgments
+Many thanks to creators and contributors of following plugins:
+- [Auto Link Title](https://github.com/zolrath/obsidian-auto-link-title)
+- [Timestamp Notes](https://github.com/juliang22/ObsidianTimestampNotes)
+- [Recent Files](https://github.com/tgrosinger/recent-files-obsidian)
