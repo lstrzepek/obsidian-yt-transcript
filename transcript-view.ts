@@ -16,10 +16,11 @@ const formatTimestamp = (t: number): string => {
 }
 export class TranscriptView extends ItemView {
   plugin: YTranscriptPlugin;
-  transcript: TranscriptResponse[];
+  dataLoaded: boolean;
   constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
     super(leaf);
     this.plugin = plugin;
+    this.dataLoaded = false;
   }
 
   getViewType(): string {
@@ -31,50 +32,18 @@ export class TranscriptView extends ItemView {
   getIcon(): string {
     return "scroll";
   }
-  // onPaneMenu(menu: Menu): void {
-  //   menu
-  //     .addItem((item) => {
-  //       item
-  //       .setTitle('Copy as text')
-  //     })
-  //     .addItem((item) => {
-  //       item
-  //         .setTitle('Copy transcript')
-  //         .setIcon('copy')
-  //         .onClick(async () => {
-  //           const file = this.app.workspace.getActiveFile();
-  //           if (file === null) {
-  //             new Notice("No active file");
-  //             return;
-  //           }
-  //           const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-  //           console.log(view);
-  //           if (view) {
-  //             const editor = view.editor;
-  //             editor.replaceRange(this.transcript.map(t => t.text).join(' '), editor.getCursor());
-  //           }
-  //         })
-  //     })
-  // }
+
   protected async onOpen(): Promise<void> {
+    console.log('open!');
     const { contentEl } = this;
     contentEl.empty();
     contentEl.createEl("h4", { text: "Transcript" });
   }
 
-  createTextLine(line: TranscriptResponse): HTMLSpanElement {
-    const span = this.contentEl.createEl('span', { cls: "transcript-line", text: line.text + " " });
-    span.setAttr('draggable', 'true');
-    span.addEventListener('dragstart', (event: DragEvent) => {
-      const dragManager = (this.app as any).dragManager;
-      console.log(dragManager);
-      const dragData = dragManager.dragLink(event, line.text);
-      dragManager.onDragStart(event, dragData);
-    });
-    return span;
-  }
-
   async setEphemeralState({ url, timestampMod, lang, country }: any): Promise<void> {
+    if(this.dataLoaded)
+    return;
+
     try {
       const data = await YoutubeTranscript.fetchTranscript(url, { lang, country });
       if (!data) {
@@ -83,35 +52,51 @@ export class TranscriptView extends ItemView {
         this.contentEl.createEl('div', { text: "Please check if video contains any transcript or try adjust language and country in plugin settings." });
         return;
       }
-      this.transcript = data;
 
-      var div = createEl('div');
+      const handleDrag = (quote: string) => {
+        return (event: DragEvent) => {
+          event.dataTransfer?.setData('text/plain', quote);
+        }
+      };
 
+      var quote = '';
+      var quoteTimeOffset = 0;
       data.forEach((line, i) => {
+        if (i === 0) {
+          quoteTimeOffset = line.offset;
+          quote += (line.text + ' ');
+          return;
+        }
         if (i % timestampMod == 0) {
-          div = createEl('div');
-          const button = createEl('button', { cls: "timestamp", attr: { "data-timestamp": line.offset.toFixed() } });
-          const link = createEl('a', { text: formatTimestamp(line.offset), attr: { "href": url + '&t=' + Math.floor(line.offset / 1000) } });
+          const div = createEl('div', { cls: "transcript-block" });
+
+          const button = createEl('button', { cls: "timestamp", attr: { "data-timestamp": quoteTimeOffset.toFixed() } });
+          const link = createEl('a', { text: formatTimestamp(quoteTimeOffset), attr: { "href": url + '&t=' + Math.floor(quoteTimeOffset / 1000) } });
           button.appendChild(link);
-          const span = this.createTextLine(line);
+
+          const span = this.contentEl.createEl('span', { cls: "transcript-line", text: quote });
+          span.setAttr('draggable', 'true');
+          span.addEventListener('dragstart', handleDrag(quote));
+
           div.appendChild(button);
           div.appendChild(span);
           div.addEventListener('contextmenu', (event: MouseEvent) => {
             const menu = new Menu();
             menu.addItem((item) => item
-            .setTitle('Copy all')
-            .onClick(() => {
-                navigator.clipboard.writeText(data.map(t=>t.text).join(' '));
+              .setTitle('Copy all')
+              .onClick(() => {
+                navigator.clipboard.writeText(data.map(t => t.text).join(' '));
               }));
-            menu.showAtPosition({x: event.clientX, y: event.clientY});
-          })
+            menu.showAtPosition({ x: event.clientX, y: event.clientY });
+          });
           this.contentEl.appendChild(div);
+
+          quote = '';
+          quoteTimeOffset = line.offset;
         }
-        else {
-          const span = this.createTextLine(line);
-          div.appendChild(span);
-        }
+        quote += (line.text + ' ');
       });
+      this.dataLoaded = true;
     } catch (err) {
       this.contentEl.empty();
       this.contentEl.createEl('h4', { text: "Error" });
