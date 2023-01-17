@@ -1,5 +1,6 @@
 import { App, Editor, MarkdownView, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { TranscriptView, TRANSCRIPT_TYPE_VIEW } from 'transcript-view';
+import { EditorExtensions }  from './editor-extensions';
 
 interface YTranscriptSettings {
   timestampMod: number;
@@ -8,7 +9,7 @@ interface YTranscriptSettings {
 }
 
 const DEFAULT_SETTINGS: YTranscriptSettings = {
-  timestampMod: 32,
+  timestampMod: 5,
   lang: 'en',
   country: 'EN'
 }
@@ -26,7 +27,8 @@ export default class YTranscriptPlugin extends Plugin {
       id: 'fetch-transcript',
       name: "Fetch transcription",
       editorCallback: (editor: Editor, _: MarkdownView) => {
-        const url = editor.getSelection().trim();
+        const url = EditorExtensions.getSelectedText(editor).trim();
+        console.log(url);
         this.openView(url);
       }
     });
@@ -72,8 +74,6 @@ class YTranslateSettingTab extends PluginSettingTab {
   constructor(app: App, plugin: YTranscriptPlugin) {
     super(app, plugin);
     this.plugin = plugin;
-    const v = [...Array(99).keys()];
-    this.values = v.reduce((acc, item) => (acc[item.toFixed()] = item.toFixed(), acc), {} as Record<string, string>);
   }
 
   display(): void {
@@ -84,12 +84,12 @@ class YTranslateSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Timestamp mod')
       .setDesc('Indicates how often timestamp should occure in text (1 - every line, 10 - every 10 lines)')
-      .addDropdown(v => v
-        .addOptions(this.values)
-        .setValue(this.values['32'])
+      .addText(text => text
+        .setValue(this.plugin.settings.timestampMod.toFixed())
         .onChange(async (value) => {
-          console.log('Timestamp:' + value);
-          this.plugin.settings.timestampMod = Number.parseInt(value);
+          console.log('Timestamp:', value);
+          const v = Number.parseInt(value);
+          this.plugin.settings.timestampMod = Number.isNaN(v) ? 5 : v;
           await this.plugin.saveSettings();
         }));
 
