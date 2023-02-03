@@ -4,103 +4,102 @@ import YoutubeTranscript, { TranscriptResponse } from "youtube-transcript";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 const formatTimestamp = (t: number): string => {
-  const fnum = (n: number) => (n && n < 10) ? "0" + n.toFixed() : n.toFixed();
-  const s = 1000;
-  const m = 60 * s;
-  const h = 60 * m;
-  const hours = Math.floor(t / h);
-  const minutes = Math.floor((t - hours * h) / m);
-  const seconds = Math.floor((t - minutes * m) / s);
-  const time = hours ? [hours, minutes, seconds] : [minutes, seconds];
-  return time.map(fnum).join(':')
+	const fnum = (n: number) => (n && n < 10) ? "0" + n.toFixed() : n.toFixed();
+	const s = 1000;
+	const m = 60 * s;
+	const h = 60 * m;
+	const hours = Math.floor(t / h);
+	const minutes = Math.floor((t - hours * h) / m);
+	const seconds = Math.floor((t - minutes * m) / s);
+	const time = hours ? [hours, minutes, seconds] : [minutes, seconds];
+	return time.map(fnum).join(':')
 }
 export class TranscriptView extends ItemView {
-  plugin: YTranscriptPlugin;
-  dataLoaded: boolean;
-  constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
-    super(leaf);
-    this.plugin = plugin;
-    this.dataLoaded = false;
-  }
+	plugin: YTranscriptPlugin;
+	dataLoaded: boolean;
+	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
+		super(leaf);
+		this.plugin = plugin;
+		this.dataLoaded = false;
+	}
 
-  getViewType(): string {
-    return TRANSCRIPT_TYPE_VIEW;
-  }
-  getDisplayText(): string {
-    return "Transcript";
-  }
-  getIcon(): string {
-    return "scroll";
-  }
+	getViewType(): string {
+		return TRANSCRIPT_TYPE_VIEW;
+	}
+	getDisplayText(): string {
+		return "Transcript";
+	}
+	getIcon(): string {
+		return "scroll";
+	}
 
-  protected async onOpen(): Promise<void> {
-    console.log('open!');
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.createEl("h4", { text: "Transcript" });
-  }
+	protected async onOpen(): Promise<void> {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.createEl("h4", { text: "Transcript" });
+	}
 
-  async setEphemeralState({ url, timestampMod, lang, country }: any): Promise<void> {
-    if(this.dataLoaded)
-    return;
+	async setEphemeralState({ url, timestampMod, lang, country }: any): Promise<void> {
+		if (this.dataLoaded)
+			return;
 
-    try {
-      const data = await YoutubeTranscript.fetchTranscript(url, { lang, country });
-      if (!data) {
-        this.contentEl.empty();
-        this.contentEl.createEl('h4', { text: "No transcript found" });
-        this.contentEl.createEl('div', { text: "Please check if video contains any transcript or try adjust language and country in plugin settings." });
-        return;
-      }
+		try {
+			const data = await YoutubeTranscript.fetchTranscript(url, { lang, country });
+			if (!data) {
+				this.contentEl.empty();
+				this.contentEl.createEl('h4', { text: "No transcript found" });
+				this.contentEl.createEl('div', { text: "Please check if video contains any transcript or try adjust language and country in plugin settings." });
+				return;
+			}
 
-      const handleDrag = (quote: string) => {
-        return (event: DragEvent) => {
-          event.dataTransfer?.setData('text/plain', quote);
-        }
-      };
+			const handleDrag = (quote: string) => {
+				return (event: DragEvent) => {
+					event.dataTransfer?.setData('text/plain', quote);
+				}
+			};
 
-      var quote = '';
-      var quoteTimeOffset = 0;
-      data.forEach((line, i) => {
-        if (i === 0) {
-          quoteTimeOffset = line.offset;
-          quote += (line.text + ' ');
-          return;
-        }
-        if (i % timestampMod == 0) {
-          const div = createEl('div', { cls: "transcript-block" });
+			var quote = '';
+			var quoteTimeOffset = 0;
+			data.forEach((line, i) => {
+				if (i === 0) {
+					quoteTimeOffset = line.offset;
+					quote += (line.text + ' ');
+					return;
+				}
+				if (i % timestampMod == 0) {
+					const div = createEl('div', { cls: "transcript-block" });
 
-          const button = createEl('button', { cls: "timestamp", attr: { "data-timestamp": quoteTimeOffset.toFixed() } });
-          const link = createEl('a', { text: formatTimestamp(quoteTimeOffset), attr: { "href": url + '&t=' + Math.floor(quoteTimeOffset / 1000) } });
-          button.appendChild(link);
+					const button = createEl('button', { cls: "timestamp", attr: { "data-timestamp": quoteTimeOffset.toFixed() } });
+					const link = createEl('a', { text: formatTimestamp(quoteTimeOffset), attr: { "href": url + '&t=' + Math.floor(quoteTimeOffset / 1000) } });
+					button.appendChild(link);
 
-          const span = this.contentEl.createEl('span', { cls: "transcript-line", text: quote });
-          span.setAttr('draggable', 'true');
-          span.addEventListener('dragstart', handleDrag(quote));
+					const span = this.contentEl.createEl('span', { cls: "transcript-line", text: quote });
+					span.setAttr('draggable', 'true');
+					span.addEventListener('dragstart', handleDrag(quote));
 
-          div.appendChild(button);
-          div.appendChild(span);
-          div.addEventListener('contextmenu', (event: MouseEvent) => {
-            const menu = new Menu();
-            menu.addItem((item) => item
-              .setTitle('Copy all')
-              .onClick(() => {
-                navigator.clipboard.writeText(data.map(t => t.text).join(' '));
-              }));
-            menu.showAtPosition({ x: event.clientX, y: event.clientY });
-          });
-          this.contentEl.appendChild(div);
+					div.appendChild(button);
+					div.appendChild(span);
+					div.addEventListener('contextmenu', (event: MouseEvent) => {
+						const menu = new Menu();
+						menu.addItem((item) => item
+							.setTitle('Copy all')
+							.onClick(() => {
+								navigator.clipboard.writeText(data.map(t => t.text).join(' '));
+							}));
+						menu.showAtPosition({ x: event.clientX, y: event.clientY });
+					});
+					this.contentEl.appendChild(div);
 
-          quote = '';
-          quoteTimeOffset = line.offset;
-        }
-        quote += (line.text + ' ');
-      });
-      this.dataLoaded = true;
-    } catch (err) {
-      this.contentEl.empty();
-      this.contentEl.createEl('h4', { text: "Error" });
-      this.contentEl.createEl('div', { text: err });
-    }
-  }
+					quote = '';
+					quoteTimeOffset = line.offset;
+				}
+				quote += (line.text + ' ');
+			});
+			this.dataLoaded = true;
+		} catch (err) {
+			this.contentEl.empty();
+			this.contentEl.createEl('h4', { text: "Error" });
+			this.contentEl.createEl('div', { text: err });
+		}
+	}
 }
