@@ -81,8 +81,8 @@ class YTranslateSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', { text: 'Settings for YTranslate' });
 
 		new Setting(containerEl)
-			.setName('Timestamp mod')
-			.setDesc('Indicates how often timestamp should occure in text (1 - every line, 10 - every 10 lines)')
+			.setName('Timestamp interval')
+			.setDesc('Indicates how often timestamp should occur in text (1 - every line, 10 - every 10 lines)')
 			.addText(text => text
 				.setValue(this.plugin.settings.timestampMod.toFixed())
 				.onChange(async (value) => {
