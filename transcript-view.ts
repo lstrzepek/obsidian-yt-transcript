@@ -1,19 +1,9 @@
 import YTranscriptPlugin from "main";
 import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
 import YoutubeTranscript, { TranscriptResponse } from "youtube-transcript";
+import {formatTimestamp} from "./timestampt-utils";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
-const formatTimestamp = (t: number): string => {
-	const fnum = (n: number) => (n && n < 10) ? "0" + n.toFixed() : n.toFixed();
-	const s = 1000;
-	const m = 60 * s;
-	const h = 60 * m;
-	const hours = Math.floor(t / h);
-	const minutes = Math.floor((t - hours * h) / m);
-	const seconds = Math.floor((t - minutes * m) / s);
-	const time = hours ? [hours, minutes, seconds] : [minutes, seconds];
-	return time.map(fnum).join(':')
-}
 export class TranscriptView extends ItemView {
 	plugin: YTranscriptPlugin;
 	dataLoaded: boolean;
