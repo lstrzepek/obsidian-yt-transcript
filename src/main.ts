@@ -8,6 +8,7 @@ import {
 } from "obsidian";
 import { TranscriptView, TRANSCRIPT_TYPE_VIEW } from "src/transcript-view";
 import { EditorExtensions } from "../editor-extensions";
+import URLModal from "./url-modal";
 
 interface YTranscriptSettings {
 	timestampMod: number;
@@ -33,11 +34,19 @@ export default class YTranscriptPlugin extends Plugin {
 		);
 
 		this.addCommand({
-			id: "fetch-transcript",
-			name: "Fetch transcription",
+			id: "fetch-transcript-from-text",
+			name: "Fetch transcription from selected text",
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const url = EditorExtensions.getSelectedText(editor).trim();
 				this.openView(url);
+			},
+		});
+
+		this.addCommand({
+			id: "fetch-transcript-from-url",
+			name: "Fetch transcription from URL",
+			callback: () => {
+				new URLModal(this.app, this).open();
 			},
 		});
 
