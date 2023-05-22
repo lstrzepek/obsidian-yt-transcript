@@ -12,3 +12,10 @@ If your plugin does not need CSS, delete this file.
 .transcript-block {
   padding-top: 10px;
 }
+
+.yt-transcript__highlight {
+  background-color: var(--text-highlight-bg);
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: bold;
+}

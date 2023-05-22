@@ -3,6 +3,7 @@ import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
 import { TranscriptResponse, YoutubeTranscript } from "youtube-transcript";
 import { formatTimestamp } from "./timestampt-utils";
 import { getYouTubeVideoTitle } from "./url-utils";
+import { highlightText } from "./html-utils";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
@@ -23,7 +24,6 @@ export class TranscriptView extends ItemView {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.createEl("h4", { text: "YouTube Transcript" });
-		this.loadingEl = contentEl.createEl("div", { text: "Loading..." });
 	}
 
 	async onClose() {
@@ -54,6 +54,7 @@ export class TranscriptView extends ItemView {
 	) {
 		const searchInputEl = this.contentEl.createEl("input");
 		searchInputEl.type = "text";
+		searchInputEl.style.marginBottom = "10px";
 		searchInputEl.placeholder = "Search transcript...";
 		searchInputEl.oninput = (e) => {
 			const searchFilter = (e.target as HTMLInputElement).value;
@@ -65,7 +66,7 @@ export class TranscriptView extends ItemView {
 		url: string,
 		data: TranscriptResponse[],
 		timestampMod: number,
-		searchFilter: string
+		searchValue: string
 	) {
 		this.dataContainerEl.empty();
 
@@ -111,7 +112,7 @@ export class TranscriptView extends ItemView {
 
 		transcriptBlocks
 			.filter((block) =>
-				block.quote.toLowerCase().includes(searchFilter.toLowerCase())
+				block.quote.toLowerCase().includes(searchValue.toLowerCase())
 			)
 			.forEach((block) => {
 				const { quote, quoteTimeOffset } = block;
@@ -137,6 +138,10 @@ export class TranscriptView extends ItemView {
 					cls: "transcript-line",
 					text: quote,
 				});
+
+				//Highlight any match search terms
+				if (searchValue !== "") highlightText(span, searchValue);
+
 				span.setAttr("draggable", "true");
 				span.addEventListener("dragstart", handleDrag(quote));
 
@@ -177,6 +182,10 @@ export class TranscriptView extends ItemView {
 		const url = leafUrls[leafIndex];
 
 		try {
+			this.loadingEl = this.contentEl.createEl("div", {
+				text: "Loading...",
+			});
+
 			//Get the youtube video title and transcript at the same time
 			const [videoTitle, data] = await Promise.all([
 				getYouTubeVideoTitle(url),
