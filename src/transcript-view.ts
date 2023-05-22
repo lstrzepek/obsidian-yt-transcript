@@ -49,6 +49,7 @@ export class TranscriptView extends ItemView {
 			const videoTitle = await getYouTubeVideoTitle(url);
 			const titleEl = this.contentEl.createEl("div");
 			titleEl.innerHTML = videoTitle;
+			titleEl.style.fontWeight = "bold";
 
 			const data = await YoutubeTranscript.fetchTranscript(url, {
 				lang,
