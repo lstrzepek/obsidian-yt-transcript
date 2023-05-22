@@ -1,4 +1,4 @@
-import { TranscriptResponse } from "youtube-transcript";
+import { TranscriptLine } from "./fetch-transcript";
 import { TranscriptBlock } from "./types";
 
 /**
@@ -7,12 +7,12 @@ import { TranscriptBlock } from "./types";
  * @param searchValue - the value that will be highlight
  */
 export const highlightText = (div: HTMLElement, searchValue: string) => {
-	const content = div.innerHTML;
-	const highlightedContent = content.replace(
-		new RegExp(searchValue, "gi"),
-		'<span class="yt-transcript__highlight">$&</span>'
-	);
-	div.innerHTML = highlightedContent;
+    const content = div.innerHTML;
+    const highlightedContent = content.replace(
+        new RegExp(searchValue, "gi"),
+        '<span class="yt-transcript__highlight">$&</span>'
+    );
+    div.innerHTML = highlightedContent;
 };
 
 /**
@@ -21,38 +21,38 @@ export const highlightText = (div: HTMLElement, searchValue: string) => {
  * @param timestampMod - the number of seconds between each timestamp
  */
 export const getTranscriptBlocks = (
-	data: TranscriptResponse[],
-	timestampMod: number
+    data: TranscriptLine[],
+    timestampMod: number
 ) => {
-	const transcriptBlocks: TranscriptBlock[] = [];
+    const transcriptBlocks: TranscriptBlock[] = [];
 
-	//Convert data into blocks
-	var quote = "";
-	var quoteTimeOffset = 0;
-	data.forEach((line, i) => {
-		if (i === 0) {
-			quoteTimeOffset = line.offset;
-			quote += line.text + " ";
-			return;
-		}
-		if (i % timestampMod == 0) {
-			transcriptBlocks.push({
-				quote,
-				quoteTimeOffset,
-			});
+    //Convert data into blocks
+    var quote = "";
+    var quoteTimeOffset = 0;
+    data.forEach((line, i) => {
+        if (i === 0) {
+            quoteTimeOffset = line.offset;
+            quote += line.text + " ";
+            return;
+        }
+        if (i % timestampMod == 0) {
+            transcriptBlocks.push({
+                quote,
+                quoteTimeOffset,
+            });
 
-			//Clear the data
-			quote = "";
-			quoteTimeOffset = line.offset;
-		}
-		quote += line.text + " ";
-	});
+            //Clear the data
+            quote = "";
+            quoteTimeOffset = line.offset;
+        }
+        quote += line.text + " ";
+    });
 
-	if (quote !== "") {
-		transcriptBlocks.push({
-			quote,
-			quoteTimeOffset,
-		});
-	}
-	return transcriptBlocks;
+    if (quote !== "") {
+        transcriptBlocks.push({
+            quote,
+            quoteTimeOffset,
+        });
+    }
+    return transcriptBlocks;
 };

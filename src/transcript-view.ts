@@ -1,8 +1,9 @@
 import YTranscriptPlugin from "src/main";
 import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
-import { TranscriptResponse, YoutubeTranscript } from "youtube-transcript";
+import { TranscriptLine, TranscriptResponse, YoutubeTranscript } from "./fetch-transcript";
 import { formatTimestamp } from "./timestampt-utils";
 import { getTranscriptBlocks, highlightText } from "./render-utils";
+import { throws } from "assert";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
@@ -55,7 +56,7 @@ export class TranscriptView extends ItemView {
      */
     private renderSearchInput(
         url: string,
-        data: TranscriptResponse[],
+        data: TranscriptResponse,
         timestampMod: number
     ) {
         const searchInputEl = this.contentEl.createEl("input");
@@ -74,6 +75,17 @@ export class TranscriptView extends ItemView {
     }
 
     /**
+     * Adds a div with the video title to the view content
+     * @param title - the title of the video
+     */
+    private renderVideoTitle(title: string) {
+        const titleEl = this.contentEl.createEl("div");
+        titleEl.innerHTML = title;
+        titleEl.style.fontWeight = "bold";
+        titleEl.style.marginBottom = "20px";
+    }
+
+    /**
      * Add a transcription blocks to the view content
      * @param url - the url of the video
      * @param data - the transcript data
@@ -82,7 +94,7 @@ export class TranscriptView extends ItemView {
      */
     private renderTranscriptionBlocks(
         url: string,
-        data: TranscriptResponse[],
+        data: TranscriptResponse,
         timestampMod: number,
         searchValue: string
     ) {
@@ -95,7 +107,7 @@ export class TranscriptView extends ItemView {
         // 	};
         // };
 
-        const transcriptBlocks = getTranscriptBlocks(data, timestampMod);
+        const transcriptBlocks = getTranscriptBlocks(data.lines, timestampMod);
 
         //Filter transcript blocks based on
         const filteredBlocks = transcriptBlocks.filter((block) =>
@@ -137,7 +149,7 @@ export class TranscriptView extends ItemView {
                     menu.addItem((item) =>
                         item.setTitle("Copy all").onClick(() => {
                             navigator.clipboard.writeText(
-                                data.map((t) => t.text).join(" ")
+                                data.lines.map((t) => t.text).join(" ")
                             );
                         })
                     );
@@ -181,15 +193,16 @@ export class TranscriptView extends ItemView {
                     lang,
                     country,
                 });
-
+            if (!data) throw Error()
             this.isDataLoaded = true;
 
             this.loadingEl.detach();
+            this.renderVideoTitle(data?.title);
             this.renderSearchInput(url, data, timestampMod);
 
             this.dataContainerEl = this.contentEl.createEl("div");
 
-            if (data.length === 0) {
+            if (data.lines.length === 0) {
                 this.dataContainerEl.createEl("h4", {
                     text: "No transcript found",
                 });
