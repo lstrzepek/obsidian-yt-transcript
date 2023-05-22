@@ -36,8 +36,8 @@ export default class YTranscriptPlugin extends Plugin {
 		);
 
 		this.addCommand({
-			id: "fetch-transcription-from-text",
-			name: "Fetch transcription from selected text",
+			id: "transcript-from-text",
+			name: "Get YouTube transcript from selected text",
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const url = EditorExtensions.getSelectedText(editor).trim();
 				this.openView(url);
@@ -45,8 +45,8 @@ export default class YTranscriptPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "fetch-transcription-from-url",
-			name: "Fetch transcription from URL",
+			id: "transcript-from-url",
+			name: "Get YouTube transcript from URL",
 			callback: () => {
 				new URLModal(this.app, this).open();
 			},
@@ -87,9 +87,6 @@ class YTranslateSettingTab extends PluginSettingTab {
 	plugin: YTranscriptPlugin;
 	values: Record<string, string>;
 
-	/**
-	 *
-	 */
 	constructor(app: App, plugin: YTranscriptPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
@@ -98,7 +95,7 @@ class YTranslateSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Settings for YTranslate" });
+		containerEl.createEl("h2", { text: "Settings for YTranscript" });
 
 		new Setting(containerEl)
 			.setName("Timestamp interval")
@@ -119,7 +116,7 @@ class YTranslateSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Language")
-			.setDesc("Prefered transcript language")
+			.setDesc("Preferred transcript language")
 			.addText((text) =>
 				text
 					.setValue(this.plugin.settings.lang)
@@ -131,7 +128,7 @@ class YTranslateSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Country")
-			.setDesc("Prefered transcript country code")
+			.setDesc("Preferred transcript country code")
 			.addText((text) =>
 				text
 					.setValue(this.plugin.settings.country)

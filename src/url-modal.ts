@@ -46,14 +46,14 @@ export default class URLModal extends Modal {
 		//Button
 		const buttonEl = containerEl.createEl("button", { text: "Fetch" });
 		buttonEl.style.cursor = "pointer";
-		buttonEl.onclick = () => {
+		buttonEl.addEventListener("click", () => {
 			if (isValidYoutubeURL(this.inputText)) {
 				this.plugin.openView(this.inputText);
 				this.close();
 			} else {
 				new Notice("Invalid YouTube URL");
 			}
-		};
+		});
 	}
 
 	onClose() {
