@@ -15,36 +15,38 @@ export default class URLModal extends Modal {
 		const { contentEl } = this;
 
 		//Title
-		const title = contentEl.createEl("h4", {
+		const titleEl = contentEl.createEl("h4", {
 			text: "Fetch Transcription From URL",
 		});
-		title.style.marginBottom = "10px";
+		titleEl.style.marginBottom = "10px";
 
 		//Container
-		const container = contentEl.createEl("div");
-		container.style.display = "flex";
-		container.style.flexDirection = "column";
-		container.style.maxWidth = "350px";
-		container.style.rowGap = "20px";
+		const containerEl = contentEl.createEl("div");
+		containerEl.style.display = "flex";
+		containerEl.style.flexDirection = "column";
+		containerEl.style.maxWidth = "350px";
+		containerEl.style.rowGap = "20px";
 
 		//Input
-		const inputContainer = container.createEl("div");
-		inputContainer.style.display = "flex";
-		inputContainer.style.flexDirection = "column";
-		inputContainer.style.rowGap = "10px";
+		const inputContainerEl = containerEl.createEl("div");
+		inputContainerEl.style.display = "flex";
+		inputContainerEl.style.flexDirection = "column";
+		inputContainerEl.style.rowGap = "10px";
 
-		const label = inputContainer.createEl("label", { text: "YouTube URL" });
-		label.style.marginBottom = "5px";
+		const labelEl = inputContainerEl.createEl("label", {
+			text: "YouTube URL",
+		});
+		labelEl.style.marginBottom = "5px";
 
-		const input = inputContainer.createEl("input");
-		input.onchange = (e) => {
+		const inputEl = inputContainerEl.createEl("input");
+		inputEl.onchange = (e) => {
 			this.inputText = (e.target as HTMLInputElement).value;
 		};
 
 		//Button
-		const button = container.createEl("button", { text: "Fetch" });
-		button.style.cursor = "pointer";
-		button.onclick = () => {
+		const buttonEl = containerEl.createEl("button", { text: "Fetch" });
+		buttonEl.style.cursor = "pointer";
+		buttonEl.onclick = () => {
 			if (isValidYoutubeURL(this.inputText)) {
 				this.plugin.openView(this.inputText);
 				this.close();
