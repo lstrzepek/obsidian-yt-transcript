@@ -7,7 +7,7 @@ import { getYouTubeVideoTitle } from "./url-utils";
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
 	plugin: YTranscriptPlugin;
-	innerContainerEl: HTMLElement;
+	loadingEl: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
 		super(leaf);
@@ -18,8 +18,7 @@ export class TranscriptView extends ItemView {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.createEl("h4", { text: "YouTube Transcript" });
-
-		this.innerContainerEl = contentEl.createEl("div");
+		this.loadingEl = contentEl.createEl("div", { text: "Loading..." });
 	}
 
 	async onClose() {
@@ -39,7 +38,8 @@ export class TranscriptView extends ItemView {
 	async setEphemeralState(state: any): Promise<void> {
 		const leafIndex = this.getLeafIndex();
 
-		//If we are opening a new url, save the url into settings
+		//The state.url is not null when we call setEphermeralState from the command
+		//in this case, we will save the url to the settings for future look up
 		if (state.url) {
 			this.plugin.settings.leafUrls[leafIndex] = state.url;
 			await this.plugin.saveSettings();
@@ -49,22 +49,29 @@ export class TranscriptView extends ItemView {
 		const url = leafUrls[leafIndex];
 
 		try {
-			const videoTitle = await getYouTubeVideoTitle(url);
-			const titleEl = this.innerContainerEl.createEl("div");
+			//Get the youtube video title and transcript at the same time
+			const [videoTitle, data] = await Promise.all([
+				getYouTubeVideoTitle(url),
+				YoutubeTranscript.fetchTranscript(url, {
+					lang,
+					country,
+				}),
+			]);
+
+			this.loadingEl.detach();
+
+			const titleEl = this.contentEl.createEl("div");
 			titleEl.innerHTML = videoTitle;
 			titleEl.style.fontWeight = "bold";
 			titleEl.style.marginBottom = "10px";
 
-			const data = await YoutubeTranscript.fetchTranscript(url, {
-				lang,
-				country,
-			});
+			const dataContainerEl = this.contentEl.createEl("div");
+
 			if (!data) {
-				this.innerContainerEl.empty();
-				this.innerContainerEl.createEl("h4", {
+				dataContainerEl.createEl("h4", {
 					text: "No transcript found",
 				});
-				this.innerContainerEl.createEl("div", {
+				dataContainerEl.createEl("div", {
 					text: "Please check if video contains any transcript or try adjust language and country in plugin settings.",
 				});
 				return;
@@ -102,7 +109,7 @@ export class TranscriptView extends ItemView {
 					});
 					button.appendChild(link);
 
-					const span = this.innerContainerEl.createEl("span", {
+					const span = dataContainerEl.createEl("span", {
 						cls: "transcript-line",
 						text: quote,
 					});
@@ -125,7 +132,7 @@ export class TranscriptView extends ItemView {
 							y: event.clientY,
 						});
 					});
-					this.innerContainerEl.appendChild(div);
+					dataContainerEl.appendChild(div);
 
 					quote = "";
 					quoteTimeOffset = line.offset;
@@ -133,9 +140,9 @@ export class TranscriptView extends ItemView {
 				quote += line.text + " ";
 			});
 		} catch (err) {
-			this.innerContainerEl.empty();
-			this.innerContainerEl.createEl("h4", { text: "Error" });
-			this.innerContainerEl.createEl("div", { text: err });
+			const errorContainer = this.contentEl.createEl("div");
+			errorContainer.createEl("h4", { text: "Error" });
+			errorContainer.createEl("div", { text: err });
 		}
 	}
 
