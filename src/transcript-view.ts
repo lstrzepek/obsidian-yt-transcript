@@ -7,6 +7,7 @@ import { getYouTubeVideoTitle } from "./url-utils";
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
 	plugin: YTranscriptPlugin;
+	innerContainerEl: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
 		super(leaf);
@@ -16,7 +17,9 @@ export class TranscriptView extends ItemView {
 	async onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl("h4", { text: "Transcript" });
+		contentEl.createEl("h4", { text: "YouTube Transcript" });
+
+		this.innerContainerEl = contentEl.createEl("div");
 	}
 
 	async onClose() {
@@ -47,18 +50,21 @@ export class TranscriptView extends ItemView {
 
 		try {
 			const videoTitle = await getYouTubeVideoTitle(url);
-			const titleEl = this.contentEl.createEl("div");
+			const titleEl = this.innerContainerEl.createEl("div");
 			titleEl.innerHTML = videoTitle;
 			titleEl.style.fontWeight = "bold";
+			titleEl.style.marginBottom = "10px";
 
 			const data = await YoutubeTranscript.fetchTranscript(url, {
 				lang,
 				country,
 			});
 			if (!data) {
-				this.contentEl.empty();
-				this.contentEl.createEl("h4", { text: "No transcript found" });
-				this.contentEl.createEl("div", {
+				this.innerContainerEl.empty();
+				this.innerContainerEl.createEl("h4", {
+					text: "No transcript found",
+				});
+				this.innerContainerEl.createEl("div", {
 					text: "Please check if video contains any transcript or try adjust language and country in plugin settings.",
 				});
 				return;
@@ -96,7 +102,7 @@ export class TranscriptView extends ItemView {
 					});
 					button.appendChild(link);
 
-					const span = this.contentEl.createEl("span", {
+					const span = this.innerContainerEl.createEl("span", {
 						cls: "transcript-line",
 						text: quote,
 					});
@@ -119,7 +125,7 @@ export class TranscriptView extends ItemView {
 							y: event.clientY,
 						});
 					});
-					this.contentEl.appendChild(div);
+					this.innerContainerEl.appendChild(div);
 
 					quote = "";
 					quoteTimeOffset = line.offset;
@@ -127,10 +133,9 @@ export class TranscriptView extends ItemView {
 				quote += line.text + " ";
 			});
 		} catch (err) {
-			console.log(err);
-			this.contentEl.empty();
-			this.contentEl.createEl("h4", { text: "Error" });
-			this.contentEl.createEl("div", { text: err });
+			this.innerContainerEl.empty();
+			this.innerContainerEl.createEl("h4", { text: "Error" });
+			this.innerContainerEl.createEl("div", { text: err });
 		}
 	}
 
@@ -138,7 +143,7 @@ export class TranscriptView extends ItemView {
 		return TRANSCRIPT_TYPE_VIEW;
 	}
 	getDisplayText(): string {
-		return "Transcript";
+		return "YouTube Transcript";
 	}
 	getIcon(): string {
 		return "scroll";
