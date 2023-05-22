@@ -2,6 +2,7 @@ import YTranscriptPlugin from "src/main";
 import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
 import { YoutubeTranscript } from "youtube-transcript";
 import { formatTimestamp } from "./timestampt-utils";
+import { getYouTubeVideoTitle } from "./url-utils";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
@@ -35,9 +36,14 @@ export class TranscriptView extends ItemView {
 		lang,
 		country,
 	}: any): Promise<void> {
+		console.log(url);
 		if (this.dataLoaded) return;
 
 		try {
+			const videoTitle = await getYouTubeVideoTitle(url);
+			const titleEl = this.contentEl.createEl("h5");
+			titleEl.innerHTML = videoTitle;
+
 			const data = await YoutubeTranscript.fetchTranscript(url, {
 				lang,
 				country,
@@ -115,6 +121,7 @@ export class TranscriptView extends ItemView {
 			});
 			this.dataLoaded = true;
 		} catch (err) {
+			console.log(err);
 			this.contentEl.empty();
 			this.contentEl.createEl("h4", { text: "Error" });
 			this.contentEl.createEl("div", { text: err });

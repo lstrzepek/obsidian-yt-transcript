@@ -34,7 +34,7 @@ export default class YTranscriptPlugin extends Plugin {
 		);
 
 		this.addCommand({
-			id: "fetch-transcript-from-text",
+			id: "fetch-transcription-from-text",
 			name: "Fetch transcription from selected text",
 			editorCallback: (editor: Editor, _: MarkdownView) => {
 				const url = EditorExtensions.getSelectedText(editor).trim();
@@ -43,7 +43,7 @@ export default class YTranscriptPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "fetch-transcript-from-url",
+			id: "fetch-transcription-from-url",
 			name: "Fetch transcription from URL",
 			callback: () => {
 				new URLModal(this.app, this).open();
