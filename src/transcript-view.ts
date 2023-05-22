@@ -7,41 +7,47 @@ import { getYouTubeVideoTitle } from "./url-utils";
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
 	plugin: YTranscriptPlugin;
-	dataLoaded: boolean;
+
 	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.dataLoaded = false;
 	}
 
-	getViewType(): string {
-		return TRANSCRIPT_TYPE_VIEW;
-	}
-	getDisplayText(): string {
-		return "Transcript";
-	}
-	getIcon(): string {
-		return "scroll";
-	}
-
-	protected async onOpen(): Promise<void> {
+	async onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.createEl("h4", { text: "Transcript" });
 	}
 
-	async setEphemeralState({
-		url,
-		timestampMod,
-		lang,
-		country,
-	}: any): Promise<void> {
-		console.log(url);
-		if (this.dataLoaded) return;
+	async onClose() {
+		const leafIndex = this.getLeafIndex();
+		this.plugin.settings.leafUrls.splice(leafIndex, 1);
+	}
+
+	/**
+	 * Gets the leaf index out of all of the open leaves
+	 * This assumes that the leaf order shouldn't changed, which is a fair assumption
+	 */
+	private getLeafIndex(): number {
+		const leaves = this.app.workspace.getLeavesOfType(TRANSCRIPT_TYPE_VIEW);
+		return leaves.findIndex((leaf) => leaf === this.leaf);
+	}
+
+	async setEphemeralState(state: any): Promise<void> {
+		const leafIndex = this.getLeafIndex();
+
+		//If we are opening a new url, save the url into settings
+		if (state.url) {
+			this.plugin.settings.leafUrls[leafIndex] = state.url;
+			await this.plugin.saveSettings();
+		}
+
+		const { timestampMod, lang, country, leafUrls } = this.plugin.settings;
+		const url = leafUrls[leafIndex];
 
 		try {
 			const videoTitle = await getYouTubeVideoTitle(url);
-			const titleEl = this.contentEl.createEl("h5");
+			const titleEl = this.contentEl.createEl("div");
 			titleEl.innerHTML = videoTitle;
 
 			const data = await YoutubeTranscript.fetchTranscript(url, {
@@ -119,12 +125,21 @@ export class TranscriptView extends ItemView {
 				}
 				quote += line.text + " ";
 			});
-			this.dataLoaded = true;
 		} catch (err) {
 			console.log(err);
 			this.contentEl.empty();
 			this.contentEl.createEl("h4", { text: "Error" });
 			this.contentEl.createEl("div", { text: err });
 		}
+	}
+
+	getViewType(): string {
+		return TRANSCRIPT_TYPE_VIEW;
+	}
+	getDisplayText(): string {
+		return "Transcript";
+	}
+	getIcon(): string {
+		return "scroll";
 	}
 }

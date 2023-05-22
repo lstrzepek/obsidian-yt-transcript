@@ -14,12 +14,14 @@ interface YTranscriptSettings {
 	timestampMod: number;
 	lang: string;
 	country: string;
+	leafUrls: string[];
 }
 
 const DEFAULT_SETTINGS: YTranscriptSettings = {
 	timestampMod: 5,
 	lang: "en",
 	country: "EN",
+	leafUrls: [],
 };
 
 export default class YTranscriptPlugin extends Plugin {
@@ -61,9 +63,6 @@ export default class YTranscriptPlugin extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 		leaf.setEphemeralState({
 			url,
-			timestampMod: this.settings.timestampMod,
-			lang: this.settings.lang,
-			country: this.settings.country,
 		});
 	}
 
