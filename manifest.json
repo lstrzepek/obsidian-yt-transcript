@@ -1,7 +1,7 @@
 {
 	"id": "ytranscript",
 	"name": "YTranscript",
-	"version": "0.6.4",
+	"version": "0.7.0",
 	"minAppVersion": "0.15.0",
 	"description": "This is simple plugin to fetch transcription for Youtube.",
 	"author": "Łukasz Strzępek",
