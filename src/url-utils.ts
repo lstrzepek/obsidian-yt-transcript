@@ -54,13 +54,20 @@ export function getUrlFromText(
 
 /**
  * Matches a YouTube URL
+ * This is the same regex as the as the one used in `youtube-transcript`
  * @example
- * https://www.youtube.com/watch?v=QH2-TGUlwu4
+ * youtube.com/watch?v={video_id}
  * @example
- * https://youtube.com/watch?v=QH2-TGUlwu4
+ * youtube.com/v/{video_id}
+ * @example
+ * youtube.com/embed/{video_id}
+ * @example
+ * youtube.com/{any_path}/{video_id}
+ * @example
+ * youtu.be/{video_id}
  */
 const YOUTUBE_URL_REGEX = new RegExp(
-	/^(https?:\/\/)?(www\.)?youtube\.com\/watch\?v=[\w-]+/
+	/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
 );
 
 /**
