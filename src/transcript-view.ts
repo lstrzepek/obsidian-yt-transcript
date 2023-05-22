@@ -6,6 +6,7 @@ import { getYouTubeVideoTitle } from "./url-utils";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
+	isDataLoaded: boolean;
 	plugin: YTranscriptPlugin;
 	loadingEl: HTMLElement;
 	dataContainerEl: HTMLElement;
@@ -15,6 +16,7 @@ export class TranscriptView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
 		super(leaf);
 		this.plugin = plugin;
+		this.isDataLoaded = false;
 	}
 
 	async onOpen() {
@@ -159,6 +161,9 @@ export class TranscriptView extends ItemView {
 	}
 
 	async setEphemeralState(state: any): Promise<void> {
+		//If we switch to another view and then switch back, we don't want to reload the data
+		if (this.isDataLoaded) return;
+
 		const leafIndex = this.getLeafIndex();
 
 		//The state.url is not null when we call setEphermeralState from the command
@@ -180,6 +185,8 @@ export class TranscriptView extends ItemView {
 					country,
 				}),
 			]);
+
+			this.isDataLoaded = true;
 
 			this.loadingEl.detach();
 			this.renderVideoTitle(videoTitle);
