@@ -6,11 +6,11 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
-.yt-transcript__timestamp {
-  margin-right: 10px;
-}
+
 .yt-transcript__transcript-block {
-  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 25px;
 }
 
 .yt-transcript__highlight {

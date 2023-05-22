@@ -73,8 +73,8 @@ export class TranscriptView extends ItemView {
 	) {
 		const searchInputEl = this.contentEl.createEl("input");
 		searchInputEl.type = "text";
-		searchInputEl.style.marginBottom = "10px";
-		searchInputEl.placeholder = "Search transcript...";
+		searchInputEl.placeholder = "Search...";
+		searchInputEl.style.marginBottom = "20px";
 		searchInputEl.addEventListener("input", (e) => {
 			const searchFilter = (e.target as HTMLInputElement).value;
 			this.renderTranscriptionBlocks(
@@ -101,11 +101,12 @@ export class TranscriptView extends ItemView {
 	) {
 		this.dataContainerEl.empty();
 
-		const handleDrag = (quote: string) => {
-			return (event: DragEvent) => {
-				event.dataTransfer?.setData("text/plain", quote);
-			};
-		};
+		// TODO implement drag and drop
+		// const handleDrag = (quote: string) => {
+		// 	return (event: DragEvent) => {
+		// 		event.dataTransfer?.setData("text/plain", quote);
+		// 	};
+		// };
 
 		const transcriptBlocks = getTranscriptBlocks(data, timestampMod);
 
@@ -116,23 +117,17 @@ export class TranscriptView extends ItemView {
 
 		filteredBlocks.forEach((block) => {
 			const { quote, quoteTimeOffset } = block;
-			const div = createEl("div", {
+			const blockContainerEl = createEl("div", {
 				cls: "yt-transcript__transcript-block",
 			});
 
-			const button = createEl("button", {
-				cls: "yt-transcript__timestamp",
-				attr: {
-					"data-timestamp": quoteTimeOffset.toFixed(),
-				},
-			});
-			const link = createEl("a", {
+			const linkEl = createEl("a", {
 				text: formatTimestamp(quoteTimeOffset),
 				attr: {
 					href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
 				},
 			});
-			button.appendChild(link);
+			linkEl.style.marginBottom = "5px";
 
 			const span = this.dataContainerEl.createEl("span", {
 				text: quote,
@@ -145,23 +140,28 @@ export class TranscriptView extends ItemView {
 			// span.setAttr("draggable", "true");
 			// span.addEventListener("dragstart", handleDrag(quote));
 
-			div.appendChild(button);
-			div.appendChild(span);
-			div.addEventListener("contextmenu", (event: MouseEvent) => {
-				const menu = new Menu();
-				menu.addItem((item) =>
-					item.setTitle("Copy all").onClick(() => {
-						navigator.clipboard.writeText(
-							data.map((t) => t.text).join(" ")
-						);
-					})
-				);
-				menu.showAtPosition({
-					x: event.clientX,
-					y: event.clientY,
-				});
-			});
-			this.dataContainerEl.appendChild(div);
+			blockContainerEl.appendChild(linkEl);
+			blockContainerEl.appendChild(span);
+
+			blockContainerEl.addEventListener(
+				"contextmenu",
+				(event: MouseEvent) => {
+					const menu = new Menu();
+					menu.addItem((item) =>
+						item.setTitle("Copy all").onClick(() => {
+							navigator.clipboard.writeText(
+								data.map((t) => t.text).join(" ")
+							);
+						})
+					);
+					menu.showAtPosition({
+						x: event.clientX,
+						y: event.clientY,
+					});
+				}
+			);
+
+			this.dataContainerEl.appendChild(blockContainerEl);
 		});
 	}
 
