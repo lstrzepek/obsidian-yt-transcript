@@ -1,21 +1,17 @@
 import YTranscriptPlugin from "src/main";
 import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
-import {
-	TranscriptLine,
-	TranscriptResponse,
-	YoutubeTranscript,
-} from "./fetch-transcript";
+import { TranscriptResponse, YoutubeTranscript } from "./fetch-transcript";
 import { formatTimestamp } from "./timestampt-utils";
 import { getTranscriptBlocks, highlightText } from "./render-utils";
-import { throws } from "assert";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
 	isDataLoaded: boolean;
 	plugin: YTranscriptPlugin;
 
-	loadingEl: HTMLElement;
-	dataContainerEl: HTMLElement;
+	loaderContainerEl?: HTMLElement;
+	dataContainerEl?: HTMLElement;
+	errorContainerEl?: HTMLElement;
 
 	videoTitle?: string;
 	videoData?: TranscriptResponse[] = [];
@@ -50,9 +46,11 @@ export class TranscriptView extends ItemView {
 	 * Adds a div with loading text to the view content
 	 */
 	private renderLoader() {
-		this.loadingEl = this.contentEl.createEl("div", {
-			text: "Loading...",
-		});
+		if (this.loaderContainerEl !== undefined) {
+			this.loaderContainerEl.createEl("div", {
+				text: "Loading...",
+			});
+		}
 	}
 
 	/**
@@ -102,70 +100,77 @@ export class TranscriptView extends ItemView {
 		timestampMod: number,
 		searchValue: string
 	) {
-		this.dataContainerEl.empty();
-
-		// TODO implement drag and drop
-		// const handleDrag = (quote: string) => {
-		// 	return (event: DragEvent) => {
-		// 		event.dataTransfer?.setData("text/plain", quote);
-		// 	};
-		// };
-
-		const transcriptBlocks = getTranscriptBlocks(data.lines, timestampMod);
-
-		//Filter transcript blocks based on
-		const filteredBlocks = transcriptBlocks.filter((block) =>
-			block.quote.toLowerCase().includes(searchValue.toLowerCase())
-		);
-
-		filteredBlocks.forEach((block) => {
-			const { quote, quoteTimeOffset } = block;
-			const blockContainerEl = createEl("div", {
-				cls: "yt-transcript__transcript-block",
-			});
-
-			const linkEl = createEl("a", {
-				text: formatTimestamp(quoteTimeOffset),
-				attr: {
-					href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
-				},
-			});
-			linkEl.style.marginBottom = "5px";
-
-			const span = this.dataContainerEl.createEl("span", {
-				text: quote,
-			});
-
-			//Highlight any match search terms
-			if (searchValue !== "") highlightText(span, searchValue);
+		const dataContainerEl = this.dataContainerEl;
+		if (dataContainerEl !== undefined) {
+			//Clear old data before rerendering
+			dataContainerEl.empty();
 
 			// TODO implement drag and drop
-			// span.setAttr("draggable", "true");
-			// span.addEventListener("dragstart", handleDrag(quote));
+			// const handleDrag = (quote: string) => {
+			// 	return (event: DragEvent) => {
+			// 		event.dataTransfer?.setData("text/plain", quote);
+			// 	};
+			// };
 
-			blockContainerEl.appendChild(linkEl);
-			blockContainerEl.appendChild(span);
-
-			blockContainerEl.addEventListener(
-				"contextmenu",
-				(event: MouseEvent) => {
-					const menu = new Menu();
-					menu.addItem((item) =>
-						item.setTitle("Copy all").onClick(() => {
-							navigator.clipboard.writeText(
-								data.lines.map((t) => t.text).join(" ")
-							);
-						})
-					);
-					menu.showAtPosition({
-						x: event.clientX,
-						y: event.clientY,
-					});
-				}
+			const transcriptBlocks = getTranscriptBlocks(
+				data.lines,
+				timestampMod
 			);
 
-			this.dataContainerEl.appendChild(blockContainerEl);
-		});
+			//Filter transcript blocks based on
+			const filteredBlocks = transcriptBlocks.filter((block) =>
+				block.quote.toLowerCase().includes(searchValue.toLowerCase())
+			);
+
+			filteredBlocks.forEach((block) => {
+				const { quote, quoteTimeOffset } = block;
+				const blockContainerEl = createEl("div", {
+					cls: "yt-transcript__transcript-block",
+				});
+
+				const linkEl = createEl("a", {
+					text: formatTimestamp(quoteTimeOffset),
+					attr: {
+						href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
+					},
+				});
+				linkEl.style.marginBottom = "5px";
+
+				const span = dataContainerEl.createEl("span", {
+					text: quote,
+				});
+
+				//Highlight any match search terms
+				if (searchValue !== "") highlightText(span, searchValue);
+
+				// TODO implement drag and drop
+				// span.setAttr("draggable", "true");
+				// span.addEventListener("dragstart", handleDrag(quote));
+
+				blockContainerEl.appendChild(linkEl);
+				blockContainerEl.appendChild(span);
+
+				blockContainerEl.addEventListener(
+					"contextmenu",
+					(event: MouseEvent) => {
+						const menu = new Menu();
+						menu.addItem((item) =>
+							item.setTitle("Copy all").onClick(() => {
+								navigator.clipboard.writeText(
+									data.lines.map((t) => t.text).join(" ")
+								);
+							})
+						);
+						menu.showAtPosition({
+							x: event.clientX,
+							y: event.clientY,
+						});
+					}
+				);
+
+				dataContainerEl.appendChild(blockContainerEl);
+			});
+		}
 	}
 
 	/**
@@ -189,6 +194,15 @@ export class TranscriptView extends ItemView {
 		const url = leafUrls[leafIndex];
 
 		try {
+			//If it's the first time loading the view, initialize our containers
+			//otherwise, clear the existing data for rerender
+			if (this.loaderContainerEl === undefined) {
+				this.loaderContainerEl = this.contentEl.createEl("div");
+			} else {
+				this.loaderContainerEl.empty();
+			}
+
+			//Clear all containers for rerender and render loader
 			this.renderLoader();
 
 			//Get the youtube video title and transcript at the same time
@@ -196,14 +210,20 @@ export class TranscriptView extends ItemView {
 				lang,
 				country,
 			});
-			if (!data) throw Error();
-			this.isDataLoaded = true;
 
-			this.loadingEl.detach();
-			this.renderVideoTitle(data?.title);
+			if (!data) throw Error();
+
+			this.isDataLoaded = true;
+			this.loaderContainerEl.empty();
+
+			this.renderVideoTitle(data.title);
 			this.renderSearchInput(url, data, timestampMod);
 
-			this.dataContainerEl = this.contentEl.createEl("div");
+			if (this.dataContainerEl === undefined) {
+				this.dataContainerEl = this.contentEl.createEl("div");
+			} else {
+				this.dataContainerEl.empty();
+			}
 
 			if (data.lines.length === 0) {
 				this.dataContainerEl.createEl("h4", {
@@ -212,15 +232,23 @@ export class TranscriptView extends ItemView {
 				this.dataContainerEl.createEl("div", {
 					text: "Please check if video contains any transcript or try adjust language and country in plugin settings.",
 				});
-				return;
+			} else {
+				this.renderTranscriptionBlocks(url, data, timestampMod, "");
 			}
-
-			this.renderTranscriptionBlocks(url, data, timestampMod, "");
 		} catch (err) {
 			console.log(err);
-			const errorContainer = this.contentEl.createEl("div");
-			errorContainer.createEl("h4", { text: "Error" });
-			errorContainer.createEl("div", { text: err });
+			this.loaderContainerEl?.empty();
+
+			if (this.errorContainerEl === undefined) {
+				this.errorContainerEl = this.contentEl.createEl("div");
+			} else {
+				this.errorContainerEl.empty();
+			}
+			this.errorContainerEl.createEl("div", {
+				text: "Error loading transcript",
+			});
+
+			this.errorContainerEl.createEl("div", { text: err });
 		}
 	}
 
