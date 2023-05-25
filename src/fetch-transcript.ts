@@ -3,15 +3,17 @@ const YOUTUBE_TITLE_REGEX = new RegExp(
 	/<meta\s+name="title"\s+content="([^"]*)">/
 );
 export class YoutubeTranscriptError extends Error {
-	constructor(err: any) {
-		if (typeof err === "object") {
-			const errorMessage = err.toString();
-			if (errorMessage.includes("ERR_INVALID_URL")) {
-				super("Invalid YouTube URL");
-				return;
-			}
+	constructor(err: unknown) {
+		if (!(err instanceof Error)) {
+			super("");
+			return;
 		}
-		super("Error fetching transcript");
+
+		if (err.message.includes("ERR_INVALID_URL")) {
+			super("Invalid YouTube URL");
+		} else {
+			super(err.message);
+		}
 	}
 }
 

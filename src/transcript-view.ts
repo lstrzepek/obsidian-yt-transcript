@@ -1,6 +1,10 @@
 import YTranscriptPlugin from "src/main";
 import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
-import { TranscriptResponse, YoutubeTranscript } from "./fetch-transcript";
+import {
+	TranscriptResponse,
+	YoutubeTranscript,
+	YoutubeTranscriptError,
+} from "./fetch-transcript";
 import { formatTimestamp } from "./timestampt-utils";
 import { getTranscriptBlocks, highlightText } from "./render-utils";
 
@@ -240,8 +244,13 @@ export class TranscriptView extends ItemView {
 			} else {
 				this.renderTranscriptionBlocks(url, data, timestampMod, "");
 			}
-		} catch (err) {
-			console.log(err);
+		} catch (err: unknown) {
+			let errorMessage = "";
+			if (err instanceof YoutubeTranscriptError) {
+				console.log(err);
+				errorMessage = err.message;
+			}
+
 			this.loaderContainerEl?.empty();
 
 			if (this.errorContainerEl === undefined) {
@@ -255,7 +264,7 @@ export class TranscriptView extends ItemView {
 			titleEl.style.marginBottom = "5px";
 
 			const messageEl = this.errorContainerEl.createEl("div", {
-				text: err.message,
+				text: errorMessage,
 			});
 			messageEl.style.color = "var(--text-muted)";
 			messageEl.style.fontSize = "var(--font-ui-small)";
