@@ -225,6 +225,11 @@ export class TranscriptView extends ItemView {
 				this.dataContainerEl.empty();
 			}
 
+			//If there was already an error clear it
+			if (this.errorContainerEl !== undefined) {
+				this.errorContainerEl.empty();
+			}
+
 			if (data.lines.length === 0) {
 				this.dataContainerEl.createEl("h4", {
 					text: "No transcript found",
@@ -240,15 +245,20 @@ export class TranscriptView extends ItemView {
 			this.loaderContainerEl?.empty();
 
 			if (this.errorContainerEl === undefined) {
-				this.errorContainerEl = this.contentEl.createEl("div");
+				this.errorContainerEl = this.contentEl.createEl("h5");
 			} else {
 				this.errorContainerEl.empty();
 			}
-			this.errorContainerEl.createEl("div", {
+			const titleEl = this.errorContainerEl.createEl("div", {
 				text: "Error loading transcript",
 			});
+			titleEl.style.marginBottom = "5px";
 
-			this.errorContainerEl.createEl("div", { text: err });
+			const messageEl = this.errorContainerEl.createEl("div", {
+				text: err.message,
+			});
+			messageEl.style.color = "var(--text-muted)";
+			messageEl.style.fontSize = "var(--font-ui-small)";
 		}
 	}
 
