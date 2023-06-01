@@ -28,10 +28,8 @@ export class PromptModal extends Modal {
     }
 
     onClose(): void {
-        // this.inputEl.removeEventListener('keydown', this.inputListener);
         this.contentEl.empty();
         if (!this.submitted) {
-            // TOFIX: for some reason throwing Error on iOS causes the app to freeze.
             this.reject();
         }
     }
