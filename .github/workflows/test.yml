@@ -1,0 +1,40 @@
+name: Build and test project
+on:
+    push:
+        branches: [master]
+    pull_request:
+        branches: [master]
+
+jobs:
+    format:
+        runs-on: ubuntu-latest
+        name: Check code formatting
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - run: npm run check-format
+    build:
+        runs-on: ubuntu-latest
+        name: Build project
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - run: npm install
+            - run: npm run build
+    test:
+        runs-on: ubuntu-latest
+        name: Test project
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - run: npm install
+            - run: npm run test
