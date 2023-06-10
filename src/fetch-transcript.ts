@@ -83,6 +83,7 @@ export class YoutubeTranscript {
 				}
 			}
 		} catch (err: any) {
+			console.log(err);
 			throw new YoutubeTranscriptError(err);
 		}
 	}
@@ -97,9 +98,14 @@ export class YoutubeTranscript {
 			?.split('"')[0];
 		const visitorData = page.split('"VISITOR_DATA":"')[1]?.split('"')[0];
 		const sessionId = page.split('"sessionId":"')[1]?.split('"')[0];
-		const clickTrackingParams = page
+		let clickTrackingParams = page
 			?.split('"clickTrackingParams":"')[1]
 			?.split('"')[0];
+
+		//youtu.be links have extra characters in clickTrackingParams that are not supported
+		//with the youtubei api
+		clickTrackingParams = clickTrackingParams.slice(0, 28);
+		console.log(clickTrackingParams);
 		return {
 			context: {
 				client: {
@@ -129,7 +135,7 @@ export class YoutubeTranscript {
 				user: {},
 				clientScreenNonce: this.generateNonce(),
 				clickTracking: {
-					clickTrackingParams,
+					clickTrackingParams: decodeURI(clickTrackingParams),
 				},
 			},
 			params,
