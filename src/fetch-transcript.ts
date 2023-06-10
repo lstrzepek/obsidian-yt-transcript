@@ -83,7 +83,6 @@ export class YoutubeTranscript {
 				}
 			}
 		} catch (err: any) {
-			console.log(err);
 			throw new YoutubeTranscriptError(err);
 		}
 	}
@@ -105,7 +104,6 @@ export class YoutubeTranscript {
 		//youtu.be links have extra characters in clickTrackingParams that are not supported
 		//with the youtubei api
 		clickTrackingParams = clickTrackingParams.slice(0, 28);
-		console.log(clickTrackingParams);
 		return {
 			context: {
 				client: {

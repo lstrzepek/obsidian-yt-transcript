@@ -247,7 +247,6 @@ export class TranscriptView extends ItemView {
 		} catch (err: unknown) {
 			let errorMessage = "";
 			if (err instanceof YoutubeTranscriptError) {
-				console.log(err);
 				errorMessage = err.message;
 			}
 
