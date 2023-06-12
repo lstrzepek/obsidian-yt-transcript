@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Plugin version**
-Affected plugin version
+Please be sure that you checked if issue applies to newest version of the plugin.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
