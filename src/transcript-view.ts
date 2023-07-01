@@ -146,7 +146,10 @@ export class TranscriptView extends ItemView {
 				});
 
 				span.addEventListener("click", (event) => {
-					navigator.clipboard.writeText(event.target.textContent);
+					const target = event.target as HTMLElement;
+					if (target !== null) {
+						navigator.clipboard.writeText(target.textContent);
+					}
 				});
 
 				//Highlight any match search terms
