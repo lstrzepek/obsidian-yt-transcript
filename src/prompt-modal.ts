@@ -35,7 +35,7 @@ export class PromptModal extends Modal {
 		textInput.inputEl.style.width = "100%";
 		textInput.onChange((value) => (this.value = value));
 		textInput.inputEl.addEventListener("keydown", (evt: KeyboardEvent) =>
-			this.enterCallback(evt)
+			this.enterCallback(evt),
 		);
 		textInput.inputEl.focus();
 
@@ -64,7 +64,7 @@ export class PromptModal extends Modal {
 
 	async openAndGetValue(
 		resolve: (value: string) => void,
-		reject: () => void
+		reject: () => void,
 	): Promise<void> {
 		this.resolve = resolve;
 		this.reject = reject;

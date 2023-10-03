@@ -12,6 +12,6 @@ describe("formatTimestamp", () => {
 		(timestamp: number, expectedFormat: string) => {
 			const formatted = formatTimestamp(timestamp);
 			expect(formatted).toEqual(expectedFormat);
-		}
+		},
 	);
 });

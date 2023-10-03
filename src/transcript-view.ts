@@ -64,7 +64,7 @@ export class TranscriptView extends ItemView {
 	private renderSearchInput(
 		url: string,
 		data: TranscriptResponse,
-		timestampMod: number
+		timestampMod: number,
 	) {
 		const searchInputEl = this.contentEl.createEl("input");
 		searchInputEl.type = "text";
@@ -76,7 +76,7 @@ export class TranscriptView extends ItemView {
 				url,
 				data,
 				timestampMod,
-				searchFilter
+				searchFilter,
 			);
 		});
 	}
@@ -98,7 +98,7 @@ export class TranscriptView extends ItemView {
 				const { quote, quoteTimeOffset } = block;
 				const href = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
 				const formattedBlock = `[${formatTimestamp(
-					quoteTimeOffset
+					quoteTimeOffset,
 				)}](${href}) ${quote}`;
 
 				return formattedBlock;
@@ -117,7 +117,7 @@ export class TranscriptView extends ItemView {
 		url: string,
 		data: TranscriptResponse,
 		timestampMod: number,
-		searchValue: string
+		searchValue: string,
 	) {
 		const dataContainerEl = this.dataContainerEl;
 		if (dataContainerEl !== undefined) {
@@ -133,12 +133,12 @@ export class TranscriptView extends ItemView {
 
 			const transcriptBlocks = getTranscriptBlocks(
 				data.lines,
-				timestampMod
+				timestampMod,
 			);
 
 			//Filter transcript blocks based on
 			const filteredBlocks = transcriptBlocks.filter((block) =>
-				block.quote.toLowerCase().includes(searchValue.toLowerCase())
+				block.quote.toLowerCase().includes(searchValue.toLowerCase()),
 			);
 
 			filteredBlocks.forEach((block) => {
@@ -182,9 +182,9 @@ export class TranscriptView extends ItemView {
 					(event: DragEvent) => {
 						event.dataTransfer?.setData(
 							"text/html",
-							blockContainerEl.innerHTML
+							blockContainerEl.innerHTML,
 						);
-					}
+					},
 				);
 
 				blockContainerEl.addEventListener(
@@ -196,16 +196,16 @@ export class TranscriptView extends ItemView {
 								navigator.clipboard.writeText(
 									this.formatContentToPaste(
 										url,
-										filteredBlocks
-									)
+										filteredBlocks,
+									),
 								);
-							})
+							}),
 						);
 						menu.showAtPosition({
 							x: event.clientX,
 							y: event.clientY,
 						});
-					}
+					},
 				);
 
 				dataContainerEl.appendChild(blockContainerEl);

@@ -6,7 +6,7 @@ const UrlPattern =
 function _cursorWithinBoundaries(
 	cursorPosition: number,
 	startIndex: number,
-	length: number
+	length: number,
 ): boolean {
 	const endIndex = startIndex + length;
 
@@ -15,7 +15,7 @@ function _cursorWithinBoundaries(
 
 export function getUrlFromText(
 	lineText: string,
-	cursorPosition: number
+	cursorPosition: number,
 ): [number, number] {
 	// First check if we're in a link
 	const linksInLine = lineText.matchAll(MarkdownUrlPattern);
@@ -25,7 +25,7 @@ export function getUrlFromText(
 			_cursorWithinBoundaries(
 				cursorPosition,
 				match.index ?? 0,
-				match[0].length
+				match[0].length,
 			)
 		) {
 			return [match.index ?? 0, (match.index ?? 0) + match[0].length];
@@ -40,7 +40,7 @@ export function getUrlFromText(
 			_cursorWithinBoundaries(
 				cursorPosition,
 				match.index ?? 0,
-				match[0].length
+				match[0].length,
 			)
 		) {
 			return [match.index ?? 0, (match.index ?? 0) + match[0].length];

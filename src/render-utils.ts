@@ -10,7 +10,7 @@ export const highlightText = (div: HTMLElement, searchValue: string) => {
 	const content = div.innerHTML;
 	const highlightedContent = content.replace(
 		new RegExp(searchValue, "gi"),
-		'<span class="yt-transcript__highlight">$&</span>'
+		'<span class="yt-transcript__highlight">$&</span>',
 	);
 	div.innerHTML = highlightedContent;
 };
@@ -22,7 +22,7 @@ export const highlightText = (div: HTMLElement, searchValue: string) => {
  */
 export const getTranscriptBlocks = (
 	data: TranscriptLine[],
-	timestampMod: number
+	timestampMod: number,
 ) => {
 	const transcriptBlocks: TranscriptBlock[] = [];
 
