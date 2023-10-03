@@ -32,7 +32,7 @@ export default class YTranscriptPlugin extends Plugin {
 
 		this.registerView(
 			TRANSCRIPT_TYPE_VIEW,
-			(leaf) => new TranscriptView(leaf, this)
+			(leaf) => new TranscriptView(leaf, this),
 		);
 
 		this.addCommand({
@@ -50,7 +50,7 @@ export default class YTranscriptPlugin extends Plugin {
 			callback: async () => {
 				const prompt = new PromptModal();
 				const url: string = await new Promise((resolve) =>
-					prompt.openAndGetValue(resolve, () => {})
+					prompt.openAndGetValue(resolve, () => {}),
 				);
 				if (url) {
 					this.openView(url);
@@ -80,7 +80,7 @@ export default class YTranscriptPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
+			await this.loadData(),
 		);
 	}
 
@@ -106,7 +106,7 @@ class YTranslateSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Timestamp interval")
 			.setDesc(
-				"Indicates how often timestamp should occur in text (1 - every line, 10 - every 10 lines)"
+				"Indicates how often timestamp should occur in text (1 - every line, 10 - every 10 lines)",
 			)
 			.addText((text) =>
 				text
@@ -117,7 +117,7 @@ class YTranslateSettingTab extends PluginSettingTab {
 							? 5
 							: v;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
@@ -129,7 +129,7 @@ class YTranslateSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.lang = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
@@ -141,7 +141,7 @@ class YTranslateSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.country = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 	}
 }

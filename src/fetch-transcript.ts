@@ -1,6 +1,6 @@
 import { request, requestUrl } from "obsidian";
 const YOUTUBE_TITLE_REGEX = new RegExp(
-	/<meta\s+name="title"\s+content="([^"]*)">/
+	/<meta\s+name="title"\s+content="([^"]*)">/,
 );
 export class YoutubeTranscriptError extends Error {
 	constructor(err: unknown) {
@@ -36,7 +36,7 @@ export interface TranscriptLine {
 export class YoutubeTranscript {
 	public static async fetchTranscript(
 		url: string,
-		config?: TranscriptConfig
+		config?: TranscriptConfig,
 	) {
 		try {
 			const videoPageBody = await request(url);
@@ -52,7 +52,7 @@ export class YoutubeTranscript {
 					url: `https://www.youtube.com/youtubei/v1/get_transcript?key=${innerTubeApiKey}`,
 					method: "POST",
 					body: JSON.stringify(
-						this.generateRequest(videoPageBody.toString(), config)
+						this.generateRequest(videoPageBody.toString(), config),
 					),
 				});
 				const body = response.json;
@@ -72,11 +72,11 @@ export class YoutubeTranscript {
 								.transcriptCueRenderer.cue.simpleText,
 							duration: parseInt(
 								cue.transcriptCueGroupRenderer.cues[0]
-									.transcriptCueRenderer.durationMs
+									.transcriptCueRenderer.durationMs,
 							),
 							offset: parseInt(
 								cue.transcriptCueGroupRenderer.cues[0]
-									.transcriptCueRenderer.startOffsetMs
+									.transcriptCueRenderer.startOffsetMs,
 							),
 						})),
 					};

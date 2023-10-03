@@ -11,7 +11,7 @@ export class EditorExtensions {
 	}
 
 	private static getWordBoundaries(
-		editor: Editor
+		editor: Editor,
 	): [EditorPosition, EditorPosition] {
 		const cursor = editor.getCursor();
 
