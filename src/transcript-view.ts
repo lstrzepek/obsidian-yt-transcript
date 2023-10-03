@@ -146,6 +146,7 @@ export class TranscriptView extends ItemView {
 				const blockContainerEl = createEl("div", {
 					cls: "yt-transcript__transcript-block",
 				});
+				blockContainerEl.draggable = true;
 
 				const linkEl = createEl("a", {
 					text: formatTimestamp(quoteTimeOffset),
@@ -176,6 +177,15 @@ export class TranscriptView extends ItemView {
 
 				blockContainerEl.appendChild(linkEl);
 				blockContainerEl.appendChild(span);
+				blockContainerEl.addEventListener(
+					"dragstart",
+					(event: DragEvent) => {
+						event.dataTransfer?.setData(
+							"text/html",
+							blockContainerEl.innerHTML
+						);
+					}
+				);
 
 				blockContainerEl.addEventListener(
 					"contextmenu",
