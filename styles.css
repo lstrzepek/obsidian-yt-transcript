@@ -8,18 +8,18 @@ If your plugin does not need CSS, delete this file.
 */
 
 .yt-transcript__transcript-block {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 25px;
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 25px;
 }
 
 .yt-transcript__transcript-block > span {
-  cursor: pointer;
+	cursor: pointer;
 }
 
 .yt-transcript__highlight {
-  background-color: var(--text-highlight-bg);
-  padding: 0 2px;
-  border-radius: 2px;
-  font-weight: bold;
+	background-color: var(--text-highlight-bg);
+	padding: 0 2px;
+	border-radius: 2px;
+	font-weight: bold;
 }

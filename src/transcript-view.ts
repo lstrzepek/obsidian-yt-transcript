@@ -7,6 +7,7 @@ import {
 } from "./fetch-transcript";
 import { formatTimestamp } from "./timestampt-utils";
 import { getTranscriptBlocks, highlightText } from "./render-utils";
+import { TranscriptBlock } from "./types";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
@@ -91,6 +92,20 @@ export class TranscriptView extends ItemView {
 		titleEl.style.marginBottom = "20px";
 	}
 
+	private formatContentToPaste(url: string, blocks: TranscriptBlock[]) {
+		return blocks
+			.map((block) => {
+				const { quote, quoteTimeOffset } = block;
+				const href = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
+				const formattedBlock = `[${formatTimestamp(
+					quoteTimeOffset
+				)}](${href}) ${quote}`;
+
+				return formattedBlock;
+			})
+			.join("\n");
+	}
+
 	/**
 	 * Add a transcription blocks to the view content
 	 * @param url - the url of the video
@@ -126,21 +141,6 @@ export class TranscriptView extends ItemView {
 				block.quote.toLowerCase().includes(searchValue.toLowerCase())
 			);
 
-			function formatContentToPaste() {
-				return filteredBlocks
-					.map((block) => {
-						const { quote, quoteTimeOffset } = block;
-						const href =
-							url + "&t=" + Math.floor(quoteTimeOffset / 1000);
-						const formattedBlock = `[${formatTimestamp(
-							quoteTimeOffset
-						)}](${href}) ${quote}`;
-
-						return formattedBlock;
-					})
-					.join("\n");
-			}
-
 			filteredBlocks.forEach((block) => {
 				const { quote, quoteTimeOffset } = block;
 				const blockContainerEl = createEl("div", {
@@ -157,13 +157,13 @@ export class TranscriptView extends ItemView {
 
 				const span = dataContainerEl.createEl("span", {
 					text: quote,
-					title: "Click to copy"
+					title: "Click to copy",
 				});
 
 				span.addEventListener("click", (event) => {
 					const target = event.target as HTMLElement;
 					if (target !== null) {
-						navigator.clipboard.writeText(target.textContent);
+						navigator.clipboard.writeText(target.textContent ?? "");
 					}
 				});
 
@@ -184,7 +184,10 @@ export class TranscriptView extends ItemView {
 						menu.addItem((item) =>
 							item.setTitle("Copy all").onClick(() => {
 								navigator.clipboard.writeText(
-									formatContentToPaste()
+									this.formatContentToPaste(
+										url,
+										filteredBlocks
+									)
 								);
 							})
 						);
@@ -204,7 +207,7 @@ export class TranscriptView extends ItemView {
 	 * Sets the state of the view
 	 * This is called when the view is loaded
 	 */
-	async setEphemeralState(state: any): Promise<void> {
+	async setEphemeralState(state: { url: string }): Promise<void> {
 		//If we switch to another view and then switch back, we don't want to reload the data
 		if (this.isDataLoaded) return;
 
