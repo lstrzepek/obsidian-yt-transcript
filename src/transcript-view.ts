@@ -157,6 +157,14 @@ export class TranscriptView extends ItemView {
 
 				const span = dataContainerEl.createEl("span", {
 					text: quote,
+					title: "Click to copy"
+				});
+
+				span.addEventListener("click", (event) => {
+					const target = event.target as HTMLElement;
+					if (target !== null) {
+						navigator.clipboard.writeText(target.textContent);
+					}
 				});
 
 				//Highlight any match search terms
