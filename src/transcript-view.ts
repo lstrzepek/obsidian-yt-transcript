@@ -126,6 +126,21 @@ export class TranscriptView extends ItemView {
 				block.quote.toLowerCase().includes(searchValue.toLowerCase())
 			);
 
+			function formatContentToPaste() {
+				return filteredBlocks
+					.map((block) => {
+						const { quote, quoteTimeOffset } = block;
+						const href =
+							url + "&t=" + Math.floor(quoteTimeOffset / 1000);
+						const formattedBlock = `[${formatTimestamp(
+							quoteTimeOffset
+						)}](${href}) ${quote}`;
+
+						return formattedBlock;
+					})
+					.join("\n");
+			}
+
 			filteredBlocks.forEach((block) => {
 				const { quote, quoteTimeOffset } = block;
 				const blockContainerEl = createEl("div", {
@@ -161,7 +176,7 @@ export class TranscriptView extends ItemView {
 						menu.addItem((item) =>
 							item.setTitle("Copy all").onClick(() => {
 								navigator.clipboard.writeText(
-									data.lines.map((t) => t.text).join(" ")
+									formatContentToPaste()
 								);
 							})
 						);
