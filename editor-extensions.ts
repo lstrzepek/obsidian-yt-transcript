@@ -4,7 +4,7 @@ import { getUrlFromText } from "./src/url-utils";
 export class EditorExtensions {
 	public static getSelectedText(editor: Editor): string {
 		if (!editor.somethingSelected()) {
-			let wordBoundaries = this.getWordBoundaries(editor);
+			const wordBoundaries = this.getWordBoundaries(editor);
 			editor.setSelection(wordBoundaries[0], wordBoundaries[1]);
 		}
 		return editor.getSelection();
@@ -13,7 +13,7 @@ export class EditorExtensions {
 	private static getWordBoundaries(
 		editor: Editor
 	): [EditorPosition, EditorPosition] {
-		let cursor = editor.getCursor();
+		const cursor = editor.getCursor();
 
 		// If its a normal URL token this is not a markdown link
 		// In this case we can simply overwrite the link boundaries as-is

@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-ytranscript",
-	"version": "0.8.2",
+	"version": "0.9.0",
 	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"scripts": {
