@@ -64,7 +64,7 @@ export class TranscriptView extends ItemView {
 	private renderSearchInput(
 		url: string,
 		data: TranscriptResponse,
-		timestampMod: number,
+		timestampMod: number
 	) {
 		const searchInputEl = this.contentEl.createEl("input");
 		searchInputEl.type = "text";
@@ -76,7 +76,7 @@ export class TranscriptView extends ItemView {
 				url,
 				data,
 				timestampMod,
-				searchFilter,
+				searchFilter
 			);
 		});
 	}
@@ -98,7 +98,7 @@ export class TranscriptView extends ItemView {
 				const { quote, quoteTimeOffset } = block;
 				const href = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
 				const formattedBlock = `[${formatTimestamp(
-					quoteTimeOffset,
+					quoteTimeOffset
 				)}](${href}) ${quote}`;
 
 				return formattedBlock;
@@ -117,7 +117,7 @@ export class TranscriptView extends ItemView {
 		url: string,
 		data: TranscriptResponse,
 		timestampMod: number,
-		searchValue: string,
+		searchValue: string
 	) {
 		const dataContainerEl = this.dataContainerEl;
 		if (dataContainerEl !== undefined) {
@@ -133,12 +133,12 @@ export class TranscriptView extends ItemView {
 
 			const transcriptBlocks = getTranscriptBlocks(
 				data.lines,
-				timestampMod,
+				timestampMod
 			);
 
 			//Filter transcript blocks based on
 			const filteredBlocks = transcriptBlocks.filter((block) =>
-				block.quote.toLowerCase().includes(searchValue.toLowerCase()),
+				block.quote.toLowerCase().includes(searchValue.toLowerCase())
 			);
 
 			filteredBlocks.forEach((block) => {
@@ -146,7 +146,7 @@ export class TranscriptView extends ItemView {
 				const blockContainerEl = createEl("div", {
 					cls: "yt-transcript__transcript-block",
 				});
-				blockContainerEl.draggable = true;
+				blockContainerEl.draggable = this.plugin.settings.isDraggable;
 
 				const linkEl = createEl("a", {
 					text: formatTimestamp(quoteTimeOffset),
@@ -182,30 +182,41 @@ export class TranscriptView extends ItemView {
 					(event: DragEvent) => {
 						event.dataTransfer?.setData(
 							"text/html",
-							blockContainerEl.innerHTML,
+							blockContainerEl.innerHTML
 						);
-					},
+					}
 				);
 
 				blockContainerEl.addEventListener(
 					"contextmenu",
 					(event: MouseEvent) => {
 						const menu = new Menu();
-						menu.addItem((item) =>
-							item.setTitle("Copy all").onClick(() => {
-								navigator.clipboard.writeText(
-									this.formatContentToPaste(
-										url,
-										filteredBlocks,
-									),
-								);
-							}),
-						);
+						menu.addItem((item) => {
+							const { isDraggable } = this.plugin.settings;
+							const context_text = isDraggable
+								? "Copy All"
+								: "copy";
+							const handleClick = isDraggable
+								? copyAll
+								: copySelection;
+							item.setTitle(context_text).onClick(handleClick);
+						});
+						function copyAll() {
+							navigator.clipboard.writeText(
+								this.formatContentToPaste(url, filteredBlocks)
+							);
+						}
+						function copySelection(e: KeyboardEvent | MouseEvent) {
+							const selection =
+								window?.getSelection()?.toString() ||
+								this.formatContentToPaste(url, filteredBlocks);
+							navigator.clipboard.writeText(selection);
+						}
 						menu.showAtPosition({
 							x: event.clientX,
 							y: event.clientY,
 						});
-					},
+					}
 				);
 
 				dataContainerEl.appendChild(blockContainerEl);
