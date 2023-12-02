@@ -177,15 +177,18 @@ export class TranscriptView extends ItemView {
 
 				blockContainerEl.appendChild(linkEl);
 				blockContainerEl.appendChild(span);
-				blockContainerEl.addEventListener(
-					"dragstart",
-					(event: DragEvent) => {
-						event.dataTransfer?.setData(
-							"text/html",
-							blockContainerEl.innerHTML
-						);
-					}
-				);
+
+				if (this.plugin.settings.isDraggable) {
+					blockContainerEl.addEventListener(
+						"dragstart",
+						(event: DragEvent) => {
+							event.dataTransfer?.setData(
+								"text/html",
+								blockContainerEl.innerHTML
+							);
+						}
+					);
+				}
 
 				blockContainerEl.addEventListener(
 					"contextmenu",

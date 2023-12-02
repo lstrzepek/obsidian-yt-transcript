@@ -3,8 +3,7 @@ import process from "process";
 import builtins from "builtin-modules";
 import { dirname, resolve as pathResolve } from "path";
 import { createRequire } from "module";
-import { copy, pathExists } from "fs-extra";
-import { writeFile } from "fs/promises";
+import { copy, pathExists, outputFile } from "fs-extra";
 
 const require = createRequire(import.meta.url);
 const manifest = require("./manifest.json");
@@ -67,7 +66,7 @@ const moveArtifactsPluginFig = {
 			const destinationFilepath = await genDestinationFilepath();
 			const pluginDir = dirname(destinationFilepath);
 
-			await writeFile("./dist/manifest.json", JSON.stringify(manifest));
+			await outputFile("./dist/manifest.json", JSON.stringify(manifest));
 			await copy(
 				"./dist/manifest.json",
 				pathResolve(pluginDir, "manifest.json")
