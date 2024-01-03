@@ -1,11 +1,12 @@
 # Usage
 
 1. In editor window select link to Youtube video
-2. Choose option YTranscript: Fetch transcription <img width="732" alt="image" src="https://user-images.githubusercontent.com/185352/211156960-8e9ae258-312a-4df6-acaf-d86eb69783fc.png">
-3. Transcription will appear in side window with timestamp <img width="1443" alt="Screenshot 2023-01-10 at 22 30 47" src="https://user-images.githubusercontent.com/185352/211666716-10df23de-d109-4143-af5d-223a60d0469c.png">
+2. Choose option YTranscript: Get Youtube transcript from selected url <img width="704" alt="Screenshot 2024-01-03 at 21 59 48" src="https://github.com/lstrzepek/obsidian-yt-transcript/assets/185352/9a0d7fd5-f830-408c-b7d8-73840e7e2d1b">
+3. Transcription will appear in side window with timestamp <img width="1499" alt="Screenshot 2024-01-03 at 22 02 04" src="https://github.com/lstrzepek/obsidian-yt-transcript/assets/185352/1412b043-ffe0-4f56-a448-307afbba1bb7">
 4. In settings you can control how often timestamp should appear (once for every x (default: 32) lines)
 5. Clicking on timestamp opens video in that place
-6. You can drag and drop lines of transcription or timestamp link
+6. Right click to copy all
+7. You can drag and drop lines of transcription or timestamp link
 
 ![YTranscriptPlugin2](https://user-images.githubusercontent.com/185352/212565518-3afc897a-84f1-479c-b588-cd35dd8b6cd3.gif)
 
