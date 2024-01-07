@@ -24,11 +24,11 @@ describe("Should return position of the url in text line", () => {
 			),
 		).toStrictEqual([35, 78]);
 	});
-	test("When cursor at the begginning of the line with single url", () => {
+	test("When cursor at the end of the line with single url", () => {
 		expect(
 			getUrlFromText(
 				"This is my favourite youtube video https://www.youtube.com/watch?v=rOSZOCoqOo8 and I'm watching it over and over.",
-				1000,
+				113,
 			),
 		).toStrictEqual([35, 78]);
 	});
