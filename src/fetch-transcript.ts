@@ -56,24 +56,23 @@ export class YoutubeTranscript {
 			const dataString =
 				playerScript!.textContent
 					?.split("var ytInitialPlayerResponse = ")?.[1] //get the start of the object {....
-					?.split("};")?.[0] + // chunk off any code after object closure.
-				"}"; // add back that curly brace we just cut.
+					?.split("};")?.[0] + "}"; // chunk off any code after object closure. // add back that curly brace we just cut.
 
 			const data = JSON.parse(dataString.trim());
 			const availableCaptions =
-				data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+				data?.captions?.playerCaptionsTracklistRenderer
+					?.captionTracks || [];
 			// If languageCode was specified then search for it's code, otherwise get the first.
 			let captionTrack = availableCaptions?.[0];
 			if (langCode)
 				captionTrack =
 					availableCaptions.find((track: any) =>
-						track.languageCode.includes(langCode)
+						track.languageCode.includes(langCode),
 					) ?? availableCaptions?.[0];
 
 			const captionsUrl = captionTrack?.baseUrl;
 
-			const resXML = await request(captionsUrl)
-				.then((xml) => parse(xml));
+			const resXML = await request(captionsUrl).then((xml) => parse(xml));
 
 			const chunks = resXML.getElementsByTagName("text");
 			console.log(chunks);
@@ -81,12 +80,11 @@ export class YoutubeTranscript {
 			return {
 				title: title,
 				lines: chunks.map((cue: any) => ({
-					text: cue.textContent.replaceAll("&#39;","\'"),
+					text: cue.textContent.replaceAll("&#39;", "'"),
 					duration: parseFloat(cue.attributes.dur) * 1000,
-					offset: parseFloat(cue.attributes.start) * 1000
-				}))
-			}
-
+					offset: parseFloat(cue.attributes.start) * 1000,
+				})),
+			};
 		} catch (err: any) {
 			throw new YoutubeTranscriptError(err);
 		}

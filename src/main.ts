@@ -62,7 +62,7 @@ export default class YTranscriptPlugin extends Plugin {
 	}
 
 	async openView(url: string) {
-		const leaf = this.app.workspace.getRightLeaf(false);
+		const leaf = this.app.workspace.getRightLeaf(false)!;
 		await leaf.setViewState({
 			type: TRANSCRIPT_TYPE_VIEW,
 		});
