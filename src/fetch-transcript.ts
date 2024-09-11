@@ -41,6 +41,7 @@ export class YoutubeTranscript {
 	) {
 		try {
 			const langCode = config?.lang ?? "en";
+
 			const videoPageBody = await request(url);
 			const parsedBody = parse(videoPageBody);
 
@@ -71,16 +72,26 @@ export class YoutubeTranscript {
 					) ?? availableCaptions?.[0];
 
 			const captionsUrl = captionTrack?.baseUrl;
+			const fixedCaptionsUrl = captionsUrl.startsWith("https://")
+				? captionsUrl
+				: "https://www.youtube.com" + captionsUrl;
 
-			const resXML = await request(captionsUrl).then((xml) => parse(xml));
+			const resXML = await request(fixedCaptionsUrl).then((xml) =>
+				parse(xml),
+			);
 
 			const chunks = resXML.getElementsByTagName("text");
-			console.log(chunks);
 
 			return {
 				title: title,
 				lines: chunks.map((cue: any) => ({
-					text: cue.textContent.replaceAll("&#39;", "'"),
+					text: cue.textContent
+						.replaceAll("&#39;", "'")
+						.replaceAll("&amp;", "&")
+						.replaceAll("&quot;", '"')
+						.replaceAll("&apos;", "'")
+						.replaceAll("&lt;", "<")
+						.replaceAll("&gt;", ">"),
 					duration: parseFloat(cue.attributes.dur) * 1000,
 					offset: parseFloat(cue.attributes.start) * 1000,
 				})),
