@@ -1,11 +1,15 @@
 import { parse } from "node-html-parser";
-import type { TranscriptConfig, TranscriptLine, TranscriptRequest, VideoData } from "./types";
+import type {
+	TranscriptConfig,
+	TranscriptLine,
+	TranscriptRequest,
+	VideoData,
+} from "./types";
 import { YoutubeTranscriptError } from "./types";
 
 const YOUTUBE_TITLE_REGEX = new RegExp(
 	/<meta\s+name="title"\s+content="([^"]*)\">/,
 );
-
 
 export function parseTranscript(responseContent: string): TranscriptLine[] {
 	const resXML = parse(responseContent);
@@ -41,7 +45,9 @@ export function parseVideoPage(
 	);
 
 	if (!playerScript) {
-		throw new YoutubeTranscriptError("Could not find ytInitialPlayerResponse");
+		throw new YoutubeTranscriptError(
+			"Could not find ytInitialPlayerResponse",
+		);
 	}
 
 	const dataString =
@@ -50,13 +56,14 @@ export function parseVideoPage(
 			?.split("};")?.[0] + "}"; // chunk off any code after object closure. // add back that curly brace we just cut.
 
 	if (!dataString) {
-		throw new YoutubeTranscriptError("Could not extract ytInitialPlayerResponse data");
+		throw new YoutubeTranscriptError(
+			"Could not extract ytInitialPlayerResponse data",
+		);
 	}
 
 	const data = JSON.parse(dataString.trim());
 	const availableCaptions =
-		data?.captions?.playerCaptionsTracklistRenderer
-			?.captionTracks || [];
+		data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
 	// If languageCode was specified then search for it's code, otherwise get the first.
 	let captionTrack = availableCaptions?.[0];
 	if (langCode)
