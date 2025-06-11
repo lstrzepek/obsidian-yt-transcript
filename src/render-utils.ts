@@ -1,5 +1,4 @@
-import { TranscriptLine } from "./fetch-transcript";
-import { TranscriptBlock } from "./types";
+import { TranscriptLine, TranscriptBlock } from "./types";
 
 /**
  * Highlights matched text in the div
