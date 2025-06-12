@@ -20,6 +20,8 @@ export class YoutubeTranscript {
 			const videoPageBody = await request(url);
 			const videoData = parseVideoPage(videoPageBody, config);
 
+			console.log(videoData);
+
 			let responseContent: string;
 			if (videoData.transcriptRequest.body) {
 				// Use requestUrl for POST requests with body

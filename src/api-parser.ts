@@ -10,6 +10,9 @@ import { YoutubeTranscriptError } from "./types";
 const YOUTUBE_TITLE_REGEX = new RegExp(
 	/<meta\s+name="title"\s+content="([^"]*)\">/,
 );
+const YOUTUBE_VIDEOID_REGEX = new RegExp(
+	/<link\s+rel="canonical"\s+href="([^"]*)\">/,
+);
 
 export function parseTranscript(responseContent: string): TranscriptLine[] {
 	try {
@@ -51,10 +54,13 @@ export function parseVideoPage(
 	let title = "";
 	if (titleMatch) title = titleMatch[1];
 
-	// Find the script containing ytInitialPlayerResponse
+	const videoIdMatch = htmlContent.match(YOUTUBE_VIDEOID_REGEX);
+	let videoId = "";
+	if (videoIdMatch) videoId = videoIdMatch[1].split("?v=")[1];
+
 	const scripts = parsedBody.getElementsByTagName("script");
 	const playerScript = scripts.find((script) =>
-		script.textContent.includes("var ytInitialPlayerResponse = {"),
+		script.textContent.includes("var ytInitialData = {"),
 	);
 
 	if (!playerScript) {
@@ -66,13 +72,11 @@ export function parseVideoPage(
 	// Extract the JSON data
 	const dataString =
 		playerScript.textContent
-			?.split("var ytInitialPlayerResponse = ")?.[1]
+			?.split("var ytInitialData = ")?.[1]
 			?.split("};")?.[0] + "}";
 
 	if (!dataString) {
-		throw new YoutubeTranscriptError(
-			"Could not extract ytInitialPlayerResponse data",
-		);
+		throw new YoutubeTranscriptError("Could not extract transcript info");
 	}
 
 	let data;
@@ -80,43 +84,33 @@ export function parseVideoPage(
 		data = JSON.parse(dataString.trim());
 	} catch (err) {
 		throw new YoutubeTranscriptError(
-			"Failed to parse ytInitialPlayerResponse JSON",
+			"Failed to parse transcriot info JSON",
 		);
 	}
 
-	// Extract video ID
-	const videoId = data?.videoDetails?.videoId;
-	if (!videoId) {
-		throw new YoutubeTranscriptError("Could not extract video ID");
-	}
-
-	// Extract client version
-	const configScript = scripts.find((script) =>
-		script.textContent.includes("ytcfg.set("),
+	const transcriptPanel = data?.engagementPanels?.find(
+		(panel: any) =>
+			panel?.engagementPanelSectionListRenderer?.content
+				?.continuationItemRenderer?.continuationEndpoint
+				?.getTranscriptEndpoint,
 	);
-
-	let clientVersion = "2.20250610.04.00"; // fallback version
-	if (configScript) {
-		const versionMatch = configScript.textContent.match(
-			/clientVersion":"([^"]+)"/,
-		);
-		if (versionMatch) {
-			clientVersion = versionMatch[1];
-		}
-	}
+	const params =
+		transcriptPanel?.engagementPanelSectionListRenderer?.content
+			?.continuationItemRenderer?.continuationEndpoint
+			?.getTranscriptEndpoint?.params;
 
 	// Create the API request body
 	const requestBody = {
 		context: {
 			client: {
 				clientName: "WEB",
-				clientVersion: clientVersion,
+				clientVersion: "2.20250610.04.00",
 				hl: config?.lang || "en",
 				gl: config?.country || "US",
 			},
 		},
 		externalVideoId: videoId,
-		params: generateTranscriptParams(videoId, config?.lang || "en"),
+		params: params,
 	};
 
 	return {
@@ -129,13 +123,4 @@ export function parseVideoPage(
 			body: JSON.stringify(requestBody),
 		},
 	};
-}
-
-function generateTranscriptParams(videoId: string, langCode: string): string {
-	// The params is a base64 encoded protobuf that contains:
-	// - Video ID
-	// - Language preferences
-	// - Panel configuration for transcript search
-	// For the video "kNNGOrJDdO8", the expected value is:
-	return "CgtrTk5HT3JKRGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D";
 }
