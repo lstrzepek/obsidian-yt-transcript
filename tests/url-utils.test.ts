@@ -1,4 +1,4 @@
-import { getUrlFromText } from "./url-utils";
+import { getUrlFromText } from "../src/url-utils";
 
 describe("Should return position of the url in text line", () => {
 	test("When cursor in the middle of the url", () => {

@@ -4,7 +4,7 @@ import {
 	TranscriptResponse,
 	YoutubeTranscript,
 	YoutubeTranscriptError,
-} from "./fetch-transcript";
+} from "./youtube-transcript";
 import { formatTimestamp } from "./timestampt-utils";
 import { getTranscriptBlocks, highlightText } from "./render-utils";
 import { TranscriptBlock } from "./types";
@@ -246,7 +246,7 @@ export class TranscriptView extends ItemView {
 			this.renderLoader();
 
 			//Get the youtube video title and transcript at the same time
-			const data = await YoutubeTranscript.fetchTranscript(url, {
+			const data = await YoutubeTranscript.getTranscript(url, {
 				lang,
 				country,
 			});
