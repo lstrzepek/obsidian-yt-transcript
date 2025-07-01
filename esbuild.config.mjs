@@ -33,6 +33,10 @@ esbuild
 			"@lezer/lr",
 			...builtins,
 		],
+		define: {
+			global: "globalThis",
+		},
+		inject: ["./buffer-polyfill.js"],
 		format: "cjs",
 		watch: !prod,
 		target: "es2018",
