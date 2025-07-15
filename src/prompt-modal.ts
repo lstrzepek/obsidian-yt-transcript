@@ -5,9 +5,12 @@ export class PromptModal extends Modal {
 	private reject: () => void;
 	private submitted = false;
 	private value: string;
+	private initialValue?: string;
 
-	constructor() {
+	constructor(initialValue?: string) {
 		super(app);
+		this.initialValue = initialValue;
+		this.value = initialValue || "";
 	}
 
 	listenInput(evt: KeyboardEvent) {
@@ -37,6 +40,14 @@ export class PromptModal extends Modal {
 		textInput.inputEl.addEventListener("keydown", (evt: KeyboardEvent) =>
 			this.enterCallback(evt),
 		);
+		
+		// Pre-populate with initial value if provided
+		if (this.initialValue) {
+			textInput.setValue(this.initialValue);
+			// Select all text so user can easily replace it
+			textInput.inputEl.select();
+		}
+		
 		textInput.inputEl.focus();
 
 		// Submit button
