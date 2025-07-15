@@ -117,7 +117,7 @@ export function parseTranscript(responseContent: string): TranscriptLine[] {
 
 function debugLog(...args: any[]) {
 	if (process.env.NODE_ENV !== "test") {
-		debugLog(...args);
+		console.log(...args);
 	}
 }
 
