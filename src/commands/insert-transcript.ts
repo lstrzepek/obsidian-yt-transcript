@@ -1,10 +1,6 @@
 import { Editor } from "obsidian";
 import { URLDetector } from "../url-detection";
-import {
-	TranscriptFormatter,
-	FormatTemplate,
-	FormatOptions,
-} from "../transcript-formatter";
+import { TranscriptFormatter, FormatTemplate, FormatOptions } from "../transcript-formatter";
 import { YoutubeTranscript } from "../youtube-transcript";
 import { PromptModal } from "../prompt-modal";
 import { EditorExtensions } from "../../editor-extensions";
@@ -28,10 +24,7 @@ export class InsertTranscriptCommand {
 	/**
 	 * Executes the insert transcript command with custom options
 	 */
-	async executeWithOptions(
-		editor: Editor,
-		options: InsertTranscriptOptions,
-	): Promise<void> {
+	async executeWithOptions(editor: Editor, options: InsertTranscriptOptions): Promise<void> {
 		try {
 			// Get YouTube URL with user confirmation
 			const url = await this.getYouTubeUrlWithConfirmation(editor);
@@ -46,28 +39,17 @@ export class InsertTranscriptCommand {
 
 			// Fetch transcript
 			const transcriptConfig = this.createTranscriptConfig();
-			const transcript = await YoutubeTranscript.getTranscript(
-				url,
-				transcriptConfig,
-			);
-
+			const transcript = await YoutubeTranscript.getTranscript(url, transcriptConfig);
+			
 			// Validate transcript
-			if (
-				!transcript ||
-				!transcript.lines ||
-				transcript.lines.length === 0
-			) {
+			if (!transcript || !transcript.lines || transcript.lines.length === 0) {
 				return; // No transcript available
 			}
 
 			// Format transcript
 			const formatOptions = this.mergeFormatOptions(options);
-			const formattedContent = TranscriptFormatter.format(
-				transcript,
-				url,
-				formatOptions,
-			);
-
+			const formattedContent = TranscriptFormatter.format(transcript, url, formatOptions);
+			
 			// Validate formatted content
 			if (!formattedContent || formattedContent.trim().length === 0) {
 				return; // Nothing to insert
@@ -76,6 +58,7 @@ export class InsertTranscriptCommand {
 			// Insert at cursor position
 			const cursor = editor.getCursor();
 			editor.replaceRange(formattedContent, cursor);
+
 		} catch (error) {
 			// Silently fail - errors are expected (network issues, no transcript, etc.)
 			console.error("Insert transcript failed:", error);
@@ -86,19 +69,17 @@ export class InsertTranscriptCommand {
 	 * Gets YouTube URL with user confirmation via prompt
 	 * Always shows prompt, but pre-populates with detected URL
 	 */
-	private async getYouTubeUrlWithConfirmation(
-		editor: Editor,
-	): Promise<string | null> {
+	private async getYouTubeUrlWithConfirmation(editor: Editor): Promise<string | null> {
 		// Try to detect URL from selection first, then clipboard
 		const detectedUrl = await this.detectYouTubeUrl(editor);
-
+		
 		// Always show prompt, but pre-populate with detected URL
 		try {
 			const prompt = new PromptModal(detectedUrl || undefined);
 			const userUrl = await new Promise<string>((resolve, reject) => {
 				prompt.openAndGetValue(resolve, reject);
 			});
-
+			
 			// Return the user's input (might be same as detected, or user might have changed it)
 			return userUrl.trim() || null;
 		} catch (error) {
@@ -132,10 +113,10 @@ export class InsertTranscriptCommand {
 	 */
 	private getUrlFromSelection(editor: Editor): string | null {
 		try {
-			const selectedText = editor.somethingSelected()
+			const selectedText = editor.somethingSelected() 
 				? editor.getSelection()
 				: EditorExtensions.getSelectedText(editor);
-
+			
 			return URLDetector.extractYouTubeUrlFromText(selectedText);
 		} catch (error) {
 			return null;
@@ -161,20 +142,17 @@ export class InsertTranscriptCommand {
 	private createTranscriptConfig(): TranscriptConfig {
 		return {
 			lang: this.plugin.settings?.lang,
-			country: this.plugin.settings?.country,
+			country: this.plugin.settings?.country
 		};
 	}
 
 	/**
 	 * Merges user options with plugin settings
 	 */
-	private mergeFormatOptions(
-		options: InsertTranscriptOptions,
-	): FormatOptions {
+	private mergeFormatOptions(options: InsertTranscriptOptions): FormatOptions {
 		return {
 			template: options.template || FormatTemplate.STANDARD,
-			timestampMod:
-				options.timestampMod || this.plugin.settings?.timestampMod || 5,
+			timestampMod: options.timestampMod || this.plugin.settings?.timestampMod || 5
 		};
 	}
 }
