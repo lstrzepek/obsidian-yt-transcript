@@ -1,34 +1,60 @@
-import { parseVideoPageWithFallbacks, extractParamsFromPage } from "../src/api-parser";
+import {
+	parseVideoPageWithFallbacks,
+	extractParamsFromPage,
+} from "../src/api-parser";
 import { TranscriptConfig } from "../src/types";
-import * as fs from "fs";
-import * as path from "path";
 
 describe("API-based parseVideoPage", () => {
-	let exampleHtml: string;
-
-	beforeAll(() => {
-		const htmlPath = path.join(__dirname, "exampleYtVideo.html");
-		exampleHtml = fs.readFileSync(htmlPath, "utf8");
-	});
+	function createMockYouTubeHtml(
+		videoId: string,
+		videoTitle: string = "Test Video",
+	): string {
+		return `
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta name="title" content="${videoTitle}">
+				<link rel="canonical" href="https://www.youtube.com/watch?v=${videoId}">
+			</head>
+			<body>
+				<script>
+					var ytInitialData = {
+						contents: {
+							videoDetails: {
+								videoId: "${videoId}",
+								title: "${videoTitle}"
+							}
+						}
+					};
+				</script>
+			</body>
+			</html>
+		`;
+	}
 
 	it("should generate correct params value for rOSZOCoqOo8", () => {
-		const htmlPath = path.join(__dirname, "exampleVideo2.html");
-		exampleHtml = fs.readFileSync(htmlPath, "utf8");
-		const result = parseVideoPageWithFallbacks(exampleHtml);
-		
+		const mockHtml = createMockYouTubeHtml("rOSZOCoqOo8", "Test Video 2");
+		const result = parseVideoPageWithFallbacks(mockHtml);
+
 		// Should include the expected params value among the fallback options
-		const expectedParams = "CgtyT1NaT0NvcU9vOBIOQ2dBU0FtVnVHZ0ElM0QYASozZW5nYWdlbWVudC1wYW5lbC1zZWFyY2hhYmxlLXRyYW5zY3JpcHQtc2VhcmNoLXBhbmVsMAA4AUAB";
-		const allParams = result.transcriptRequests.map(req => JSON.parse(req.body).params);
+		const expectedParams =
+			"CgtyT1NaT0NvcU9vOBIOQ2dBU0FtVnVHZ0ElM0QYASozZW5nYWdlbWVudC1wYW5lbC1zZWFyY2hhYmxlLXRyYW5zY3JpcHQtc2VhcmNoLXBhbmVsMAA4AUAB";
+		const allParams = result.transcriptRequests.map(
+			(req) => JSON.parse(req.body).params,
+		);
 		expect(allParams).toContain(expectedParams);
 	});
+
 	it("should generate correct params value for sLgHqZSe2o0", () => {
-		const htmlPath = path.join(__dirname, "exampleVideo3.html");
-		exampleHtml = fs.readFileSync(htmlPath, "utf8");
-		const result = parseVideoPageWithFallbacks(exampleHtml);
-		
+		const mockHtml = createMockYouTubeHtml("sLgHqZSe2o0", "Test Video 3");
+		const result = parseVideoPageWithFallbacks(mockHtml);
+
 		// Should include the expected params value among the fallback options
-		const expectedParams = "CgtzTGdIcVpTZTJvMBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDAAOAFAAQ%3D%3D";
-		const allParams = result.transcriptRequests.map(req => JSON.parse(req.body).params);
+		const expectedParams =
+			"CgtzTGdIcVpTZTJvMBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDAAOAFAAQ%3D%3D";
+		const allParams = result.transcriptRequests.map(
+			(req) => JSON.parse(req.body).params,
+		);
 		expect(allParams).toContain(expectedParams);
 	});
 });
@@ -59,9 +85,11 @@ describe("extractParamsFromPage", () => {
 				};
 			</script>
 		`;
-		
+
 		const result = extractParamsFromPage(htmlWithParams);
-		expect(result).toBe("CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D");
+		expect(result).toBe(
+			"CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D",
+		);
 	});
 
 	it("should return null when ytInitialData has no getTranscriptEndpoint", () => {
@@ -76,7 +104,7 @@ describe("extractParamsFromPage", () => {
 				};
 			</script>
 		`;
-		
+
 		const result = extractParamsFromPage(htmlWithParams);
 		expect(result).toBeNull();
 	});
@@ -103,9 +131,11 @@ describe("extractParamsFromPage", () => {
 				};
 			</script>
 		`;
-		
+
 		const result = extractParamsFromPage(htmlWithParams);
-		expect(result).toBe("CgtzTGdIcVpTZTJvMBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDAAOAFAAQ%3D%3D");
+		expect(result).toBe(
+			"CgtzTGdIcVpTZTJvMBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDAAOAFAAQ%3D%3D",
+		);
 	});
 
 	it("should return null when getTranscriptEndpoint exists but has no params", () => {
@@ -126,7 +156,7 @@ describe("extractParamsFromPage", () => {
 				};
 			</script>
 		`;
-		
+
 		const result = extractParamsFromPage(htmlWithParams);
 		expect(result).toBeNull();
 	});
@@ -144,7 +174,7 @@ describe("extractParamsFromPage", () => {
 				</body>
 			</html>
 		`;
-		
+
 		const result = extractParamsFromPage(htmlWithoutParams);
 		expect(result).toBeNull();
 	});
@@ -168,7 +198,7 @@ describe("extractParamsFromPage", () => {
 				};
 			</script>
 		`;
-		
+
 		const result = extractParamsFromPage(htmlWithShortParams);
 		expect(result).toBeNull();
 	});
@@ -198,53 +228,69 @@ describe("extractParamsFromPage", () => {
 				};
 			</script>
 		`;
-		
+
 		const result = extractParamsFromPage(htmlWithMultipleParams);
-		expect(result).toBe("CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D");
+		expect(result).toBe(
+			"CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D",
+		);
 	});
 
-	it("should try to extract params from real example HTML files", () => {
-		const htmlPath = path.join(__dirname, "exampleYtVideo.html");
-		const exampleHtml = fs.readFileSync(htmlPath, "utf8");
-		
-		const result = extractParamsFromPage(exampleHtml);
-		
-		if (result) {
-			expect(typeof result).toBe("string");
-			expect(result.length).toBeGreaterThan(10);
-			console.log("Found params in exampleYtVideo.html:", result);
-		} else {
-			console.log("No params found in exampleYtVideo.html - this is expected for some videos");
-		}
+	it("should extract params from mock HTML with getTranscriptEndpoint", () => {
+		const mockHtmlWithParams = `
+			<!DOCTYPE html>
+			<html>
+			<body>
+				<script>
+					var ytInitialData = {
+						contents: {
+							videoDetails: {
+								videoId: "testVideo123"
+							},
+							engagementPanels: [
+								{
+									engagementPanelSectionListRenderer: {
+										content: {
+											transcriptRenderer: {
+												getTranscriptEndpoint: {
+													params: "CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D"
+												}
+											}
+										}
+									}
+								}
+							]
+						}
+					};
+				</script>
+			</body>
+			</html>
+		`;
+
+		const result = extractParamsFromPage(mockHtmlWithParams);
+		expect(result).toBe(
+			"CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D",
+		);
 	});
 
-	it("should try to extract params from example video 2", () => {
-		const htmlPath = path.join(__dirname, "exampleVideo2.html");
-		const exampleHtml = fs.readFileSync(htmlPath, "utf8");
-		
-		const result = extractParamsFromPage(exampleHtml);
-		
-		if (result) {
-			expect(typeof result).toBe("string");
-			expect(result.length).toBeGreaterThan(10);
-			console.log("Found params in exampleVideo2.html:", result);
-		} else {
-			console.log("No params found in exampleVideo2.html - this is expected for some videos");
-		}
-	});
+	it("should return null for mock HTML without getTranscriptEndpoint", () => {
+		const mockHtmlWithoutParams = `
+			<!DOCTYPE html>
+			<html>
+			<body>
+				<script>
+					var ytInitialData = {
+						contents: {
+							videoDetails: {
+								videoId: "testVideo123"
+							}
+						}
+					};
+				</script>
+			</body>
+			</html>
+		`;
 
-	it("should try to extract params from example video 3", () => {
-		const htmlPath = path.join(__dirname, "exampleVideo3.html");
-		const exampleHtml = fs.readFileSync(htmlPath, "utf8");
-		
-		const result = extractParamsFromPage(exampleHtml);
-		
-		if (result) {
-			expect(typeof result).toBe("string");
-			expect(result.length).toBeGreaterThan(10);
-			console.log("Found params in exampleVideo3.html:", result);
-		} else {
-			console.log("No params found in exampleVideo3.html - this is expected for some videos");
-		}
+		const result = extractParamsFromPage(mockHtmlWithoutParams);
+		expect(result).toBeNull();
 	});
 });
