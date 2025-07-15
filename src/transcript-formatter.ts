@@ -5,8 +5,8 @@ import { URLDetector } from "./url-detection";
 
 export enum FormatTemplate {
 	MINIMAL = "minimal",
-	STANDARD = "standard",
-	RICH = "rich",
+	STANDARD = "standard", 
+	RICH = "rich"
 }
 
 export interface FormatOptions {
@@ -25,14 +25,10 @@ export class TranscriptFormatter {
 	public static format(
 		transcript: TranscriptResponse,
 		url: string,
-		options: FormatOptions,
+		options: FormatOptions
 	): string {
 		// Handle edge cases
-		if (
-			!transcript ||
-			!transcript.lines ||
-			!Array.isArray(transcript.lines)
-		) {
+		if (!transcript || !transcript.lines || !Array.isArray(transcript.lines)) {
 			return "";
 		}
 
@@ -47,30 +43,14 @@ export class TranscriptFormatter {
 		// Route to appropriate formatter based on template
 		switch (template) {
 			case FormatTemplate.MINIMAL:
-				return this.formatMinimalTemplate(
-					transcript,
-					url,
-					normalizedOptions,
-				);
+				return this.formatMinimalTemplate(transcript, url, normalizedOptions);
 			case FormatTemplate.STANDARD:
-				return this.formatStandardTemplate(
-					transcript,
-					url,
-					normalizedOptions,
-				);
+				return this.formatStandardTemplate(transcript, url, normalizedOptions);
 			case FormatTemplate.RICH:
-				return this.formatRichTemplate(
-					transcript,
-					url,
-					normalizedOptions,
-				);
+				return this.formatRichTemplate(transcript, url, normalizedOptions);
 			default:
 				// Default to standard for invalid template types
-				return this.formatStandardTemplate(
-					transcript,
-					url,
-					normalizedOptions,
-				);
+				return this.formatStandardTemplate(transcript, url, normalizedOptions);
 		}
 	}
 
@@ -80,12 +60,9 @@ export class TranscriptFormatter {
 	public static formatMinimal(
 		transcript: TranscriptResponse,
 		url: string,
-		options: Omit<FormatOptions, "template">,
+		options: Omit<FormatOptions, 'template'>
 	): string {
-		return this.format(transcript, url, {
-			...options,
-			template: FormatTemplate.MINIMAL,
-		});
+		return this.format(transcript, url, { ...options, template: FormatTemplate.MINIMAL });
 	}
 
 	/**
@@ -94,12 +71,9 @@ export class TranscriptFormatter {
 	public static formatStandard(
 		transcript: TranscriptResponse,
 		url: string,
-		options: Omit<FormatOptions, "template">,
+		options: Omit<FormatOptions, 'template'>
 	): string {
-		return this.format(transcript, url, {
-			...options,
-			template: FormatTemplate.STANDARD,
-		});
+		return this.format(transcript, url, { ...options, template: FormatTemplate.STANDARD });
 	}
 
 	/**
@@ -108,12 +82,9 @@ export class TranscriptFormatter {
 	public static formatRich(
 		transcript: TranscriptResponse,
 		url: string,
-		options: Omit<FormatOptions, "template">,
+		options: Omit<FormatOptions, 'template'>
 	): string {
-		return this.format(transcript, url, {
-			...options,
-			template: FormatTemplate.RICH,
-		});
+		return this.format(transcript, url, { ...options, template: FormatTemplate.RICH });
 	}
 
 	/**
@@ -122,7 +93,7 @@ export class TranscriptFormatter {
 	private static normalizeOptions(options: FormatOptions): FormatOptions {
 		const normalized: FormatOptions = {
 			timestampMod: Math.max(1, Math.floor(options.timestampMod)) || 5,
-			template: options.template || FormatTemplate.STANDARD,
+			template: options.template || FormatTemplate.STANDARD
 		};
 
 		// Handle edge cases for timestampMod
@@ -139,11 +110,11 @@ export class TranscriptFormatter {
 	private static formatMinimalTemplate(
 		transcript: TranscriptResponse,
 		url: string,
-		options: FormatOptions,
+		options: FormatOptions
 	): string {
 		return transcript.lines
-			.map((line) => line.text.trim())
-			.filter((text) => text.length > 0)
+			.map(line => line.text.trim())
+			.filter(text => text.length > 0)
 			.join(" ");
 	}
 
@@ -153,25 +124,20 @@ export class TranscriptFormatter {
 	private static formatStandardTemplate(
 		transcript: TranscriptResponse,
 		url: string,
-		options: FormatOptions,
+		options: FormatOptions
 	): string {
-		const blocks = getTranscriptBlocks(
-			transcript.lines,
-			options.timestampMod,
-		);
-
+		const blocks = getTranscriptBlocks(transcript.lines, options.timestampMod);
+		
 		if (blocks.length === 0) {
 			return "";
 		}
 
 		return blocks
-			.map((block) => {
+			.map(block => {
 				const { quote, quoteTimeOffset } = block;
 				const timestampStr = formatTimestamp(quoteTimeOffset);
-				const timestampUrl = url
-					? URLDetector.buildTimestampUrl(url, quoteTimeOffset)
-					: "#";
-
+				const timestampUrl = url ? URLDetector.buildTimestampUrl(url, quoteTimeOffset) : "#";
+				
 				return `[${timestampStr}](${timestampUrl}) ${quote.trim()}`;
 			})
 			.join("\n");
@@ -183,29 +149,24 @@ export class TranscriptFormatter {
 	private static formatRichTemplate(
 		transcript: TranscriptResponse,
 		url: string,
-		options: FormatOptions,
+		options: FormatOptions
 	): string {
-		const title =
-			transcript.title && transcript.title.trim()
-				? transcript.title.trim()
-				: "YouTube Transcript";
-
-		const today = new Date().toISOString().split("T")[0];
+		const title = transcript.title && transcript.title.trim() 
+			? transcript.title.trim()
+			: "YouTube Transcript";
+		
+		const today = new Date().toISOString().split('T')[0];
 		const sourceUrl = url || "Unknown";
-
+		
 		const header = [
 			`## ${title}`,
 			`**Source**: ${sourceUrl}`,
 			`**Retrieved**: ${today}`,
-			"", // Empty line before transcript
+			"" // Empty line before transcript
 		].join("\n");
 
-		const standardContent = this.formatStandardTemplate(
-			transcript,
-			url,
-			options,
-		);
-
+		const standardContent = this.formatStandardTemplate(transcript, url, options);
+		
 		return header + standardContent;
 	}
 }
