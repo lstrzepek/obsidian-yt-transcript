@@ -85,4 +85,26 @@ export class URLDetector {
 
 		return null;
 	}
+
+	/**
+	 * Creates a YouTube URL with a timestamp parameter
+	 * @param url - The base YouTube URL
+	 * @param offsetMs - The timestamp offset in milliseconds
+	 * @returns The URL with timestamp parameter added
+	 */
+	public static buildTimestampUrl(url: string, offsetMs: number): string {
+		if (!url || typeof url !== 'string') {
+			return '';
+		}
+
+		try {
+			const urlObj = new URL(url);
+			const seconds = Math.max(0, Math.floor(offsetMs / 1000));
+			urlObj.searchParams.set('t', seconds.toString());
+			return urlObj.toString();
+		} catch (error) {
+			// If URL parsing fails, return original URL
+			return url;
+		}
+	}
 }
