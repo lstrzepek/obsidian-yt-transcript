@@ -115,9 +115,15 @@ export function parseTranscript(responseContent: string): TranscriptLine[] {
 	}
 }
 
+function debugLog(...args: any[]) {
+	if (process.env.NODE_ENV !== "test") {
+		debugLog(...args);
+	}
+}
+
 export function extractParamsFromPage(htmlContent: string): string | null {
-	console.log("🔍 DEBUG: Looking for ytInitialData script tag...");
-	console.log(
+	debugLog("🔍 DEBUG: Looking for ytInitialData script tag...");
+	debugLog(
 		"📊 DEBUG: HTML content length:",
 		htmlContent.length,
 		"characters",
@@ -129,9 +135,7 @@ export function extractParamsFromPage(htmlContent: string): string | null {
 	);
 
 	if (!ytInitialDataMatch) {
-		console.log(
-			"❌ DEBUG: No ytInitialData script found with 'var' pattern",
-		);
+		debugLog("❌ DEBUG: No ytInitialData script found with 'var' pattern");
 		// Try alternative patterns
 		const altPatterns = [
 			/window\.ytInitialData\s*=\s*({.+?});/s,
@@ -142,7 +146,7 @@ export function extractParamsFromPage(htmlContent: string): string | null {
 		for (let i = 0; i < altPatterns.length; i++) {
 			const match = htmlContent.match(altPatterns[i]);
 			if (match) {
-				console.log(
+				debugLog(
 					`✅ DEBUG: Found ytInitialData using alternative pattern ${i + 1}`,
 				);
 				ytInitialDataMatch = match;
@@ -154,19 +158,34 @@ export function extractParamsFromPage(htmlContent: string): string | null {
 			return null;
 		}
 	} else {
-		console.log("✅ DEBUG: Found ytInitialData script with 'var' pattern");
+		debugLog("✅ DEBUG: Found ytInitialData script with 'var' pattern");
 	}
 
 	try {
 		// Parse the JSON data
 		const ytInitialDataString = ytInitialDataMatch[1];
-		console.log(
+		debugLog(
 			"🔧 DEBUG: Parsing ytInitialData JSON (length:",
 			ytInitialDataString.length,
 			"chars)",
 		);
 
-		const ytInitialData = JSON.parse(ytInitialDataString);
+		let ytInitialData;
+		try {
+			// Try to parse as JavaScript object first (unquoted property names)
+			ytInitialData = eval("(" + ytInitialDataString + ")");
+		} catch (evalError) {
+			// Fallback to JSON.parse if eval fails
+			try {
+				ytInitialData = JSON.parse(ytInitialDataString);
+			} catch (jsonError) {
+				debugLog(
+					"❌ DEBUG: Failed to parse ytInitialData:",
+					jsonError.message,
+				);
+				return null;
+			}
+		}
 
 		// Recursively search for getTranscriptEndpoint in the object
 		function findGetTranscriptEndpoint(
@@ -180,17 +199,17 @@ export function extractParamsFromPage(htmlContent: string): string | null {
 
 			// Log progress for deep searches
 			if (depth === 0) {
-				console.log(
+				debugLog(
 					"🔍 DEBUG: Starting recursive search for getTranscriptEndpoint...",
 				);
 			}
 
 			// Check if current object has getTranscriptEndpoint
 			if (obj.getTranscriptEndpoint && obj.getTranscriptEndpoint.params) {
-				console.log(
+				debugLog(
 					`✅ DEBUG: Found getTranscriptEndpoint.params at path: ${path} (depth: ${depth})`,
 				);
-				console.log(
+				debugLog(
 					`📏 DEBUG: Params length: ${obj.getTranscriptEndpoint.params.length} characters`,
 				);
 				return obj.getTranscriptEndpoint.params;
@@ -204,7 +223,7 @@ export function extractParamsFromPage(htmlContent: string): string | null {
 						key.toLowerCase().includes("transcript") ||
 						key.toLowerCase().includes("engagement")
 					) {
-						console.log(
+						debugLog(
 							`🔍 DEBUG: Found transcript/engagement-related key: "${key}" at path: ${path} (depth: ${depth})`,
 						);
 					}
@@ -231,23 +250,23 @@ export function extractParamsFromPage(htmlContent: string): string | null {
 		const params = findGetTranscriptEndpoint(ytInitialData);
 
 		if (params && typeof params === "string" && params.length > 50) {
-			console.log(
+			debugLog(
 				`✅ DEBUG: Found valid getTranscriptEndpoint params (${params.length} chars):`,
 				params.substring(0, 50) + "...",
 			);
 			return params;
 		} else if (params) {
-			console.log(
+			debugLog(
 				`⚠️ DEBUG: Found getTranscriptEndpoint params but too short (${params.length} chars):`,
 				params,
 			);
 		} else {
-			console.log(
+			debugLog(
 				"❌ DEBUG: No getTranscriptEndpoint.params found in ytInitialData",
 			);
 		}
 	} catch (error) {
-		console.log("❌ DEBUG: Failed to parse ytInitialData JSON:", error);
+		debugLog("❌ DEBUG: Failed to parse ytInitialData JSON:", error);
 	}
 
 	return null;
@@ -260,14 +279,14 @@ function extractVisitorData(htmlContent: string): string | null {
 		htmlContent.match(/visitorData['"]\s*:\s*['"]([^"']+)['"]/);
 
 	if (visitorDataMatch) {
-		console.log(
+		debugLog(
 			"✅ DEBUG: Found visitorData:",
 			visitorDataMatch[1].substring(0, 20) + "...",
 		);
 		return visitorDataMatch[1];
 	}
 
-	console.log("⚠️ DEBUG: No visitorData found, using fallback");
+	debugLog("⚠️ DEBUG: No visitorData found, using fallback");
 	return "Cgs5LXVQa0I1YnhHOCjZ7ZDDBjInCgJQTBIhEh0SGwsMDg8QERITFBUWFxgZGhscHR4fICEiIyQlJiAS";
 }
 
@@ -298,18 +317,18 @@ export function parseVideoPageWithFallbacks(
 
 	// Try to extract params from the page first
 	const pageParams = extractParamsFromPage(htmlContent);
-	console.log(
+	debugLog(
 		"🔍 DEBUG: Params found on video page:",
 		pageParams || "NOT FOUND",
 	);
 
 	if (pageParams) {
-		console.log(
+		debugLog(
 			"📏 DEBUG: Page params length:",
 			pageParams.length,
 			"characters",
 		);
-		console.log(
+		debugLog(
 			"🔍 DEBUG: Page params preview:",
 			pageParams.substring(0, 100) + "...",
 		);
@@ -320,14 +339,14 @@ export function parseVideoPageWithFallbacks(
 		videoId,
 		config?.lang || "en",
 	);
-	console.log(
+	debugLog(
 		"🔧 DEBUG: Generated",
 		generatedParams.length,
 		"params variations for video ID:",
 		videoId,
 	);
 	generatedParams.forEach((params, index) => {
-		console.log(
+		debugLog(
 			`  Generated variation ${index + 1} (${params.length} chars):`,
 			params.substring(0, 50) + "...",
 		);
@@ -338,7 +357,7 @@ export function parseVideoPageWithFallbacks(
 		let foundMatch = false;
 		generatedParams.forEach((generatedParam, index) => {
 			if (generatedParam === pageParams) {
-				console.log(
+				debugLog(
 					`🎯 MATCH! Page params identical to generated variation ${index + 1}`,
 				);
 				foundMatch = true;
@@ -346,7 +365,7 @@ export function parseVideoPageWithFallbacks(
 		});
 
 		if (!foundMatch) {
-			console.log(
+			debugLog(
 				"🔄 DEBUG: Page params are DIFFERENT from all generated variations - this could be video-specific!",
 			);
 		}
@@ -358,13 +377,13 @@ export function parseVideoPageWithFallbacks(
 		: generatedParams;
 
 	if (pageParams) {
-		console.log(
+		debugLog(
 			"✅ DEBUG: Will try page params FIRST (attempt 1), then",
 			generatedParams.length,
 			"generated variations",
 		);
 	} else {
-		console.log(
+		debugLog(
 			"⚠️ DEBUG: No valid page params found, will try",
 			generatedParams.length,
 			"generated variations only",

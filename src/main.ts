@@ -9,6 +9,7 @@ import {
 import { TranscriptView, TRANSCRIPT_TYPE_VIEW } from "src/transcript-view";
 import { PromptModal } from "src/prompt-modal";
 import { EditorExtensions } from "../editor-extensions";
+import { InsertTranscriptCommand } from "src/commands/insert-transcript";
 
 interface YTranscriptSettings {
 	timestampMod: number;
@@ -26,9 +27,13 @@ const DEFAULT_SETTINGS: YTranscriptSettings = {
 
 export default class YTranscriptPlugin extends Plugin {
 	settings: YTranscriptSettings;
+	private insertTranscriptCommand: InsertTranscriptCommand;
 
 	async onload() {
 		await this.loadSettings();
+
+		// Initialize commands
+		this.insertTranscriptCommand = new InsertTranscriptCommand(this);
 
 		this.registerView(
 			TRANSCRIPT_TYPE_VIEW,
@@ -55,6 +60,15 @@ export default class YTranscriptPlugin extends Plugin {
 				if (url) {
 					this.openView(url);
 				}
+			},
+		});
+
+		// New mobile-first command
+		this.addCommand({
+			id: "insert-youtube-transcript",
+			name: "Insert YouTube transcript",
+			editorCallback: async (editor: Editor, _: MarkdownView) => {
+				await this.insertTranscriptCommand.execute(editor);
 			},
 		});
 
