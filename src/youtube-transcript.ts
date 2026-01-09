@@ -1,7 +1,5 @@
 import { requestUrl } from "obsidian";
-import {
-	parseTranscriptXml,
-} from "./api-parser";
+import { parseTranscriptXml } from "./api-parser";
 import type { TranscriptConfig, TranscriptResponse } from "./types";
 import { YoutubeTranscriptError } from "./types";
 
@@ -19,7 +17,8 @@ export type {
  */
 export class YoutubeTranscript {
 	// YouTube's public InnerTube API key
-	private static readonly INNERTUBE_API_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+	private static readonly INNERTUBE_API_KEY =
+		"AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
 	private static readonly INNERTUBE_PLAYER_URL = `https://www.youtube.com/youtubei/v1/player?key=${YoutubeTranscript.INNERTUBE_API_KEY}`;
 
 	// Use ANDROID client like youtube-transcript-api does - it's less restricted
@@ -30,7 +29,7 @@ export class YoutubeTranscript {
 			androidSdkVersion: 30,
 			hl: "en",
 			gl: "US",
-		}
+		},
 	};
 
 	public static async getTranscript(
@@ -42,7 +41,9 @@ export class YoutubeTranscript {
 			const videoId = this.extractVideoIdFromUrl(url);
 			if (!videoId) {
 				throw new YoutubeTranscriptError(
-					new Error("Invalid YouTube URL - could not extract video ID"),
+					new Error(
+						"Invalid YouTube URL - could not extract video ID",
+					),
 				);
 			}
 
@@ -55,34 +56,53 @@ export class YoutubeTranscript {
 			const title = playerData.videoDetails?.title || "Unknown";
 
 			// Get caption tracks
-			const captionsData = playerData.captions?.playerCaptionsTracklistRenderer;
+			const captionsData =
+				playerData.captions?.playerCaptionsTracklistRenderer;
 			if (!captionsData || !captionsData.captionTracks) {
 				throw new YoutubeTranscriptError(
 					new Error("No captions available for this video"),
 				);
 			}
 
-			console.log(`📝 Found ${captionsData.captionTracks.length} caption track(s)`);
+			console.log(
+				`📝 Found ${captionsData.captionTracks.length} caption track(s)`,
+			);
 
 			// Find the best matching caption track
 			const langCode = config?.lang || "en";
-			const captionTrack = this.findCaptionTrack(captionsData.captionTracks, langCode);
+			const captionTrack = this.findCaptionTrack(
+				captionsData.captionTracks,
+				langCode,
+			);
 			if (!captionTrack) {
-				const availableLangs = captionsData.captionTracks.map((t: any) => t.languageCode).join(", ");
+				const availableLangs = captionsData.captionTracks
+					.map((t: any) => t.languageCode)
+					.join(", ");
 				throw new YoutubeTranscriptError(
-					new Error(`No transcript found for language '${langCode}'. Available: ${availableLangs}`),
+					new Error(
+						`No transcript found for language '${langCode}'. Available: ${availableLangs}`,
+					),
 				);
 			}
 
-			const trackName = captionTrack.name?.runs?.[0]?.text || captionTrack.name?.simpleText || captionTrack.languageCode;
-			console.log(`🔄 Using caption track: ${trackName} (${captionTrack.languageCode})`);
+			const trackName =
+				captionTrack.name?.runs?.[0]?.text ||
+				captionTrack.name?.simpleText ||
+				captionTrack.languageCode;
+			console.log(
+				`🔄 Using caption track: ${trackName} (${captionTrack.languageCode})`,
+			);
 
 			// Fetch the actual transcript from the caption URL
 			const transcriptUrl = captionTrack.baseUrl;
-			console.log(`📥 Fetching transcript from: ${transcriptUrl.substring(0, 80)}...`);
-			
+			console.log(
+				`📥 Fetching transcript from: ${transcriptUrl.substring(0, 80)}...`,
+			);
+
 			const lines = await this.fetchTranscriptFromUrl(transcriptUrl);
-			console.log(`✅ Successfully fetched ${lines.length} transcript lines`);
+			console.log(
+				`✅ Successfully fetched ${lines.length} transcript lines`,
+			);
 
 			return {
 				title: this.decodeHTML(title),
@@ -117,14 +137,17 @@ export class YoutubeTranscript {
 	/**
 	 * Fetches player data from YouTube's InnerTube API using ANDROID client
 	 */
-	private static async fetchPlayerData(videoId: string, config?: TranscriptConfig): Promise<any> {
+	private static async fetchPlayerData(
+		videoId: string,
+		config?: TranscriptConfig,
+	): Promise<any> {
 		const context = {
 			...YoutubeTranscript.INNERTUBE_CONTEXT,
 			client: {
 				...YoutubeTranscript.INNERTUBE_CONTEXT.client,
 				hl: config?.lang || "en",
 				gl: config?.country || "US",
-			}
+			},
 		};
 
 		const requestBody = {
@@ -139,7 +162,8 @@ export class YoutubeTranscript {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"User-Agent": "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip",
+				"User-Agent":
+					"com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip",
 			},
 			body: JSON.stringify(requestBody),
 		});
@@ -150,15 +174,19 @@ export class YoutubeTranscript {
 		const playabilityStatus = data.playabilityStatus;
 		if (playabilityStatus) {
 			console.log(`📊 Playability status: ${playabilityStatus.status}`);
-			
+
 			if (playabilityStatus.status === "ERROR") {
-				throw new Error(playabilityStatus.reason || "Video unavailable");
+				throw new Error(
+					playabilityStatus.reason || "Video unavailable",
+				);
 			}
 			if (playabilityStatus.status === "LOGIN_REQUIRED") {
 				throw new Error("This video requires login to view");
 			}
 			if (playabilityStatus.status === "UNPLAYABLE") {
-				throw new Error(playabilityStatus.reason || "Video is unplayable");
+				throw new Error(
+					playabilityStatus.reason || "Video is unplayable",
+				);
 			}
 		}
 
@@ -168,22 +196,31 @@ export class YoutubeTranscript {
 	/**
 	 * Finds the best matching caption track for the requested language
 	 */
-	private static findCaptionTrack(captionTracks: any[], langCode: string): any {
+	private static findCaptionTrack(
+		captionTracks: any[],
+		langCode: string,
+	): any {
 		// First try exact match
 		let track = captionTracks.find((t: any) => t.languageCode === langCode);
 		if (track) return track;
 
 		// Try matching language prefix (e.g., 'en' matches 'en-US')
-		track = captionTracks.find((t: any) => t.languageCode.startsWith(langCode + "-"));
+		track = captionTracks.find((t: any) =>
+			t.languageCode.startsWith(langCode + "-"),
+		);
 		if (track) return track;
 
 		// Try finding track where requested lang is a prefix (e.g., 'en-US' when looking for 'en')
-		track = captionTracks.find((t: any) => langCode.startsWith(t.languageCode + "-"));
+		track = captionTracks.find((t: any) =>
+			langCode.startsWith(t.languageCode + "-"),
+		);
 		if (track) return track;
 
 		// Fall back to first available track
 		if (captionTracks.length > 0) {
-			console.log(`⚠️ Language '${langCode}' not found, falling back to '${captionTracks[0].languageCode}'`);
+			console.log(
+				`⚠️ Language '${langCode}' not found, falling back to '${captionTracks[0].languageCode}'`,
+			);
 			return captionTracks[0];
 		}
 
@@ -193,7 +230,9 @@ export class YoutubeTranscript {
 	/**
 	 * Fetches transcript XML from the caption track URL
 	 */
-	private static async fetchTranscriptFromUrl(transcriptUrl: string): Promise<any[]> {
+	private static async fetchTranscriptFromUrl(
+		transcriptUrl: string,
+	): Promise<any[]> {
 		const response = await requestUrl({
 			url: transcriptUrl,
 			method: "GET",
@@ -202,7 +241,9 @@ export class YoutubeTranscript {
 			},
 		});
 
-		console.log(`📄 Transcript response length: ${response.text.length} bytes`);
+		console.log(
+			`📄 Transcript response length: ${response.text.length} bytes`,
+		);
 
 		if (response.text.length === 0) {
 			throw new Error("Received empty transcript response");
@@ -222,7 +263,9 @@ export class YoutubeTranscript {
 			.replace(/&apos;/g, "'")
 			.replace(/&lt;/g, "<")
 			.replace(/&gt;/g, ">")
-			.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+			.replace(/&#(\d+);/g, (_, code) =>
+				String.fromCharCode(parseInt(code, 10)),
+			)
 			.replace(/\\n/g, " ")
 			.replace(/\s+/g, " ")
 			.trim();

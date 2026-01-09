@@ -62,8 +62,8 @@ export function extractVideoId(htmlContent: string): string | null {
 function unescapeUrl(url: string): string {
 	if (!url) return url;
 	// Handle unicode escapes like \u0026 -> &
-	return url.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => 
-		String.fromCharCode(parseInt(hex, 16))
+	return url.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+		String.fromCharCode(parseInt(hex, 16)),
 	);
 }
 
@@ -93,8 +93,12 @@ export function getCaptionTracksFromPlayer(
 	// Sort tracks: preferred language first, then by language code
 	if (preferredLang) {
 		captionTracks.sort((a, b) => {
-			const aMatch = a.languageCode.toLowerCase().startsWith(preferredLang.toLowerCase());
-			const bMatch = b.languageCode.toLowerCase().startsWith(preferredLang.toLowerCase());
+			const aMatch = a.languageCode
+				.toLowerCase()
+				.startsWith(preferredLang.toLowerCase());
+			const bMatch = b.languageCode
+				.toLowerCase()
+				.startsWith(preferredLang.toLowerCase());
 			if (aMatch && !bMatch) return -1;
 			if (!aMatch && bMatch) return 1;
 			return 0;
@@ -134,7 +138,7 @@ export function getCaptionTracksFromPage(
 					const searchStart = htmlContent.indexOf("{", startIdx);
 					let braceCount = 0;
 					let endIdx = searchStart;
-					
+
 					for (let i = searchStart; i < htmlContent.length; i++) {
 						if (htmlContent[i] === "{") braceCount++;
 						if (htmlContent[i] === "}") braceCount--;
@@ -143,12 +147,18 @@ export function getCaptionTracksFromPage(
 							break;
 						}
 					}
-					
-					const properJson = htmlContent.substring(searchStart, endIdx);
+
+					const properJson = htmlContent.substring(
+						searchStart,
+						endIdx,
+					);
 					playerData = JSON.parse(properJson);
 				}
 
-				const tracks = getCaptionTracksFromPlayer(playerData, preferredLang);
+				const tracks = getCaptionTracksFromPlayer(
+					playerData,
+					preferredLang,
+				);
 				if (tracks.length > 0) {
 					return tracks;
 				}
@@ -172,7 +182,7 @@ export function getCaptionTracksFromPage(
 				const searchStart = htmlContent.indexOf("{", startIdx);
 				let braceCount = 0;
 				let endIdx = searchStart;
-				
+
 				for (let i = searchStart; i < htmlContent.length; i++) {
 					if (htmlContent[i] === "{") braceCount++;
 					if (htmlContent[i] === "}") braceCount--;
@@ -181,10 +191,10 @@ export function getCaptionTracksFromPage(
 						break;
 					}
 				}
-				
+
 				const properJson = htmlContent.substring(searchStart, endIdx);
 				const data = JSON.parse(properJson);
-				
+
 				// Look for captions in the data structure
 				const tracks = getCaptionTracksFromPlayer(data, preferredLang);
 				if (tracks.length > 0) {
@@ -210,8 +220,12 @@ function decodeHtmlEntities(text: string): string {
 		.replace(/&quot;/g, '"')
 		.replace(/&#39;/g, "'")
 		.replace(/&apos;/g, "'")
-		.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
-		.replace(/&#x([a-fA-F0-9]+);/g, (_, code) => String.fromCharCode(parseInt(code, 16)))
+		.replace(/&#(\d+);/g, (_, code) =>
+			String.fromCharCode(parseInt(code, 10)),
+		)
+		.replace(/&#x([a-fA-F0-9]+);/g, (_, code) =>
+			String.fromCharCode(parseInt(code, 16)),
+		)
 		.replace(/\n/g, " ")
 		.trim();
 }
