@@ -1,129 +1,251 @@
 import {
-	parseVideoPageWithFallbacks,
-	extractParamsFromPage,
+	extractVideoId,
+	extractVideoTitle,
+	getCaptionTracksFromPlayer,
+	getCaptionTracksFromPage,
+	parseTranscriptXml,
 } from "../src/api-parser";
-import { TranscriptConfig } from "../src/types";
 
-describe("API-based parseVideoPage", () => {
-	function createMockYouTubeHtml(
-		videoId: string,
-		videoTitle: string = "Test Video",
-	): string {
-		return `
-			<!DOCTYPE html>
+describe("extractVideoTitle", () => {
+	it("should extract title from YouTube page HTML", () => {
+		const html = `
 			<html>
 			<head>
-				<meta name="title" content="${videoTitle}">
-				<link rel="canonical" href="https://www.youtube.com/watch?v=${videoId}">
+				<meta name="title" content="Test Video Title">
 			</head>
-			<body>
-				<script>
-					var ytInitialData = {
-						contents: {
-							videoDetails: {
-								videoId: "${videoId}",
-								title: "${videoTitle}"
-							}
-						}
-					};
-				</script>
-			</body>
 			</html>
 		`;
-	}
-
-	it("should generate correct params value for rOSZOCoqOo8", () => {
-		const mockHtml = createMockYouTubeHtml("rOSZOCoqOo8", "Test Video 2");
-		const result = parseVideoPageWithFallbacks(mockHtml);
-
-		// Should include the expected params value among the fallback options
-		const expectedParams =
-			"CgtyT1NaT0NvcU9vOBIOQ2dBU0FtVnVHZ0ElM0QYASozZW5nYWdlbWVudC1wYW5lbC1zZWFyY2hhYmxlLXRyYW5zY3JpcHQtc2VhcmNoLXBhbmVsMAA4AUAB";
-		const allParams = result.transcriptRequests.map(
-			(req) => JSON.parse(req.body).params,
-		);
-		expect(allParams).toContain(expectedParams);
+		expect(extractVideoTitle(html)).toBe("Test Video Title");
 	});
 
-	it("should generate correct params value for sLgHqZSe2o0", () => {
-		const mockHtml = createMockYouTubeHtml("sLgHqZSe2o0", "Test Video 3");
-		const result = parseVideoPageWithFallbacks(mockHtml);
-
-		// Should include the expected params value among the fallback options
-		const expectedParams =
-			"CgtzTGdIcVpTZTJvMBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDAAOAFAAQ%3D%3D";
-		const allParams = result.transcriptRequests.map(
-			(req) => JSON.parse(req.body).params,
-		);
-		expect(allParams).toContain(expectedParams);
+	it("should return empty string when title not found", () => {
+		const html = "<html><head></head></html>";
+		expect(extractVideoTitle(html)).toBe("");
 	});
 });
 
-describe("extractParamsFromPage", () => {
-	it("should extract params from ytInitialData getTranscriptEndpoint", () => {
-		const htmlWithParams = `
+describe("extractVideoId", () => {
+	it("should extract video ID from canonical URL", () => {
+		const html = `
+			<html>
+			<head>
+				<link rel="canonical" href="https://www.youtube.com/watch?v=rOSZOCoqOo8">
+			</head>
+			</html>
+		`;
+		expect(extractVideoId(html)).toBe("rOSZOCoqOo8");
+	});
+
+	it("should extract video ID from videoId JSON property", () => {
+		const html = `
 			<script>
-				var ytInitialData = {
-					"contents": {
-						"videoDetails": {
-							"videoId": "test123"
+				var ytInitialData = {"videoId": "sLgHqZSe2o0"};
+			</script>
+		`;
+		expect(extractVideoId(html)).toBe("sLgHqZSe2o0");
+	});
+
+	it("should extract video ID from watch URL pattern", () => {
+		const html = `
+			<a href="https://www.youtube.com/watch?v=kNNGOrJDdO8">Link</a>
+		`;
+		expect(extractVideoId(html)).toBe("kNNGOrJDdO8");
+	});
+
+	it("should return null when no video ID found", () => {
+		const html = "<html><head></head></html>";
+		expect(extractVideoId(html)).toBeNull();
+	});
+});
+
+describe("getCaptionTracksFromPlayer", () => {
+	it("should extract caption tracks from player data", () => {
+		const playerData = {
+			captions: {
+				playerCaptionsTracklistRenderer: {
+					captionTracks: [
+						{
+							baseUrl: "https://www.youtube.com/api/timedtext?lang=en",
+							name: { simpleText: "English" },
+							languageCode: "en",
+							isTranslatable: true,
 						},
-						"engagementPanels": [
-							{
-								"engagementPanelSectionListRenderer": {
-									"content": {
-										"transcriptRenderer": {
-											"getTranscriptEndpoint": {
-												"params": "CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D"
-											}
-										}
-									}
-								}
-							}
-						]
-					}
-				};
-			</script>
-		`;
+						{
+							baseUrl: "https://www.youtube.com/api/timedtext?lang=es",
+							name: { simpleText: "Spanish" },
+							languageCode: "es",
+							isTranslatable: true,
+						},
+					],
+				},
+			},
+		};
 
-		const result = extractParamsFromPage(htmlWithParams);
-		expect(result).toBe(
-			"CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D",
-		);
+		const tracks = getCaptionTracksFromPlayer(playerData);
+		expect(tracks).toHaveLength(2);
+		expect(tracks[0].languageCode).toBe("en");
+		expect(tracks[0].name).toBe("English");
+		expect(tracks[1].languageCode).toBe("es");
 	});
 
-	it("should return null when ytInitialData has no getTranscriptEndpoint", () => {
-		const htmlWithParams = `
-			<script>
-				var ytInitialData = {
-					"contents": {
-						"videoDetails": {
-							"videoId": "test123"
-						}
-					}
-				};
-			</script>
-		`;
+	it("should prioritize preferred language", () => {
+		const playerData = {
+			captions: {
+				playerCaptionsTracklistRenderer: {
+					captionTracks: [
+						{
+							baseUrl: "https://example.com/en",
+							name: { simpleText: "English" },
+							languageCode: "en",
+							isTranslatable: true,
+						},
+						{
+							baseUrl: "https://example.com/es",
+							name: { simpleText: "Spanish" },
+							languageCode: "es",
+							isTranslatable: true,
+						},
+					],
+				},
+			},
+		};
 
-		const result = extractParamsFromPage(htmlWithParams);
-		expect(result).toBeNull();
+		const tracks = getCaptionTracksFromPlayer(playerData, "es");
+		expect(tracks[0].languageCode).toBe("es");
 	});
 
-	it("should extract params from nested getTranscriptEndpoint", () => {
-		const htmlWithParams = `
+	it("should return empty array when no captions available", () => {
+		const playerData = { captions: null };
+		const tracks = getCaptionTracksFromPlayer(playerData);
+		expect(tracks).toHaveLength(0);
+	});
+
+	it("should handle name with runs array format", () => {
+		const playerData = {
+			captions: {
+				playerCaptionsTracklistRenderer: {
+					captionTracks: [
+						{
+							baseUrl: "https://example.com/en",
+							name: { runs: [{ text: "English (auto-generated)" }] },
+							languageCode: "en",
+							isTranslatable: false,
+						},
+					],
+				},
+			},
+		};
+
+		const tracks = getCaptionTracksFromPlayer(playerData);
+		expect(tracks[0].name).toBe("English (auto-generated)");
+	});
+});
+
+describe("parseTranscriptXml", () => {
+	it("should parse <text> tag format", () => {
+		const xml = `<?xml version="1.0" encoding="utf-8" ?>
+			<transcript>
+				<text start="0.5" dur="2.5">Hello world</text>
+				<text start="3.0" dur="1.5">This is a test</text>
+			</transcript>
+		`;
+
+		const lines = parseTranscriptXml(xml);
+		expect(lines).toHaveLength(2);
+		expect(lines[0].text).toBe("Hello world");
+		expect(lines[0].offset).toBe(500);
+		expect(lines[0].duration).toBe(2500);
+		expect(lines[1].text).toBe("This is a test");
+		expect(lines[1].offset).toBe(3000);
+	});
+
+	it("should parse <p> tag format", () => {
+		const xml = `<?xml version="1.0" encoding="utf-8" ?>
+			<timedtext>
+				<p t="500" d="2500">Hello world</p>
+				<p t="3000" d="1500">This is a test</p>
+			</timedtext>
+		`;
+
+		const lines = parseTranscriptXml(xml);
+		expect(lines).toHaveLength(2);
+		expect(lines[0].text).toBe("Hello world");
+		expect(lines[0].offset).toBe(500);
+		expect(lines[0].duration).toBe(2500);
+	});
+
+	it("should decode HTML entities", () => {
+		const xml = `<?xml version="1.0" encoding="utf-8" ?>
+			<transcript>
+				<text start="0" dur="1">Tom &amp; Jerry</text>
+				<text start="1" dur="1">&lt;script&gt; tag</text>
+				<text start="2" dur="1">Say &quot;hello&quot;</text>
+				<text start="3" dur="1">It&#39;s fine</text>
+			</transcript>
+		`;
+
+		const lines = parseTranscriptXml(xml);
+		expect(lines[0].text).toBe("Tom & Jerry");
+		expect(lines[1].text).toBe("<script> tag");
+		expect(lines[2].text).toBe('Say "hello"');
+		expect(lines[3].text).toBe("It's fine");
+	});
+
+	it("should strip HTML tags from text content", () => {
+		const xml = `<?xml version="1.0" encoding="utf-8" ?>
+			<transcript>
+				<text start="0" dur="1">Hello <font color="#AAAAAA">world</font></text>
+			</transcript>
+		`;
+
+		const lines = parseTranscriptXml(xml);
+		expect(lines[0].text).toBe("Hello world");
+	});
+
+	it("should return empty array for empty XML", () => {
+		const xml = `<?xml version="1.0" encoding="utf-8" ?>
+			<transcript></transcript>
+		`;
+
+		const lines = parseTranscriptXml(xml);
+		expect(lines).toHaveLength(0);
+	});
+
+	it("should skip empty text entries", () => {
+		const xml = `<?xml version="1.0" encoding="utf-8" ?>
+			<transcript>
+				<text start="0" dur="1">Hello</text>
+				<text start="1" dur="1">   </text>
+				<text start="2" dur="1">World</text>
+			</transcript>
+		`;
+
+		const lines = parseTranscriptXml(xml);
+		expect(lines).toHaveLength(2);
+		expect(lines[0].text).toBe("Hello");
+		expect(lines[1].text).toBe("World");
+	});
+});
+
+describe("getCaptionTracksFromPage", () => {
+	it("should extract caption tracks from ytInitialPlayerResponse", () => {
+		const html = `
 			<script>
-				var ytInitialData = {
-					"sidebar": {
-						"playlistPanelRenderer": {
-							"contents": [
+				var ytInitialPlayerResponse = {
+					"captions": {
+						"playerCaptionsTracklistRenderer": {
+							"captionTracks": [
 								{
-									"playlistPanelVideoRenderer": {
-										"transcript": {
-											"getTranscriptEndpoint": {
-												"params": "CgtzTGdIcVpTZTJvMBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDAAOAFAAQ%3D%3D"
-											}
-										}
-									}
+									"baseUrl": "https://www.youtube.com/api/timedtext?lang=en",
+									"name": {"simpleText": "English"},
+									"languageCode": "en",
+									"isTranslatable": true
+								},
+								{
+									"baseUrl": "https://www.youtube.com/api/timedtext?lang=es",
+									"name": {"simpleText": "Spanish"},
+									"languageCode": "es",
+									"isTranslatable": true
 								}
 							]
 						}
@@ -132,111 +254,57 @@ describe("extractParamsFromPage", () => {
 			</script>
 		`;
 
-		const result = extractParamsFromPage(htmlWithParams);
-		expect(result).toBe(
-			"CgtzTGdIcVpTZTJvMBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDAAOAFAAQ%3D%3D",
-		);
+		const tracks = getCaptionTracksFromPage(html);
+		expect(tracks).toHaveLength(2);
+		expect(tracks[0].languageCode).toBe("en");
+		expect(tracks[0].name).toBe("English");
+		expect(tracks[1].languageCode).toBe("es");
 	});
 
-	it("should return null when getTranscriptEndpoint exists but has no params", () => {
-		const htmlWithParams = `
+	it("should prioritize preferred language", () => {
+		const html = `
 			<script>
-				var ytInitialData = {
-					"contents": {
-						"engagementPanels": [
-							{
-								"transcriptRenderer": {
-									"getTranscriptEndpoint": {
-										"videoId": "test123"
-									}
+				var ytInitialPlayerResponse = {
+					"captions": {
+						"playerCaptionsTracklistRenderer": {
+							"captionTracks": [
+								{
+									"baseUrl": "https://example.com/en",
+									"name": {"simpleText": "English"},
+									"languageCode": "en"
+								},
+								{
+									"baseUrl": "https://example.com/es",
+									"name": {"simpleText": "Spanish"},
+									"languageCode": "es"
 								}
-							}
-						]
-					}
-				};
-			</script>
-		`;
-
-		const result = extractParamsFromPage(htmlWithParams);
-		expect(result).toBeNull();
-	});
-
-	it("should return null when no ytInitialData found", () => {
-		const htmlWithoutParams = `
-			<html>
-				<body>
-					<script>
-						var someOtherData = {
-							title: "Test Video",
-							description: "Test Description"
-						};
-					</script>
-				</body>
-			</html>
-		`;
-
-		const result = extractParamsFromPage(htmlWithoutParams);
-		expect(result).toBeNull();
-	});
-
-	it("should return null for empty HTML", () => {
-		const result = extractParamsFromPage("");
-		expect(result).toBeNull();
-	});
-
-	it("should ignore short params (less than 50 characters)", () => {
-		const htmlWithShortParams = `
-			<script>
-				var ytInitialData = {
-					"contents": {
-						"transcriptRenderer": {
-							"getTranscriptEndpoint": {
-								"params": "shortParams123"
-							}
+							]
 						}
 					}
 				};
 			</script>
 		`;
 
-		const result = extractParamsFromPage(htmlWithShortParams);
-		expect(result).toBeNull();
+		const tracks = getCaptionTracksFromPage(html, "es");
+		expect(tracks[0].languageCode).toBe("es");
 	});
 
-	it("should extract the first valid getTranscriptEndpoint when multiple exist", () => {
-		const htmlWithMultipleParams = `
+	it("should return empty array when no captions in page", () => {
+		const html = `
 			<script>
-				var ytInitialData = {
-					"contents": {
-						"engagementPanels": [
-							{
-								"transcriptRenderer": {
-									"getTranscriptEndpoint": {
-										"params": "CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D"
-									}
-								}
-							}
-						],
-						"sidebar": {
-							"transcriptRenderer": {
-								"getTranscriptEndpoint": {
-									"params": "CgtyT1NaT0NvcU9vOBIOQ2dBU0FtVnVHZ0ElM0QYASozZW5nYWdlbWVudC1wYW5lbC1zZWFyY2hhYmxlLXRyYW5zY3JpcHQtc2VhcmNoLXBhbmVsMAA4AUAB"
-								}
-							}
-						}
-					}
+				var ytInitialPlayerResponse = {
+					"playabilityStatus": {"status": "OK"}
 				};
 			</script>
 		`;
 
-		const result = extractParamsFromPage(htmlWithMultipleParams);
-		expect(result).toBe(
-			"CgtrTk5HT3JKZGRPOBISQ2dOaGMzSVNBbVZ1R2dBJTNEGAEqM2VuZ2FnZW1lbnQtcGFuZWwtc2VhcmNoYWJsZS10cmFuc2NyaXB0LXNlYXJjaC1wYW5lbDABOAFAAQ%3D%3D",
-		);
+		const tracks = getCaptionTracksFromPage(html);
+		expect(tracks).toHaveLength(0);
 	});
 
-	it.skip("should try to extract params from real example HTML files - SKIPPED (files removed)", () => {
-		// These tests are skipped because the HTML files contained potential personal data
-		// and have been removed for security reasons
+	it("should return empty array when no ytInitialPlayerResponse", () => {
+		const html = "<html><body></body></html>";
+		const tracks = getCaptionTracksFromPage(html);
+		expect(tracks).toHaveLength(0);
 	});
 });
