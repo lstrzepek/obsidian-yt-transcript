@@ -1,4 +1,4 @@
-import type { TranscriptLine } from "./types";
+import type { Chapter, TranscriptLine } from "./types";
 import { YoutubeTranscriptError } from "./types";
 
 const YOUTUBE_TITLE_REGEX = new RegExp(
@@ -319,4 +319,67 @@ export function parseTranscript(responseContent: string): TranscriptLine[] {
 			`Failed to parse API response: ${error}`,
 		);
 	}
+}
+
+/**
+ * Extract chapters from YouTube InnerTube "next" endpoint response
+ * Chapters are stored in engagementPanels with panelIdentifier containing "chapters"
+ */
+export function extractChaptersFromNextResponse(nextData: any): Chapter[] {
+	const chapters: Chapter[] = [];
+
+	if (!nextData) {
+		return chapters;
+	}
+
+	// Find engagement panels containing chapters
+	const engagementPanels = nextData.engagementPanels;
+	if (!Array.isArray(engagementPanels)) {
+		return chapters;
+	}
+
+	for (const panel of engagementPanels) {
+		const panelRenderer = panel?.engagementPanelSectionListRenderer;
+		if (!panelRenderer) continue;
+
+		const panelId = panelRenderer.panelIdentifier || "";
+		// Only look for actual chapter panels (auto-chapters or description-chapters)
+		// Don't match other macro-markers like "key moments" or "highlights"
+		if (!panelId.includes("chapters")) {
+			continue;
+		}
+
+		// Extract chapters from macroMarkersListRenderer
+		const content = panelRenderer.content?.macroMarkersListRenderer;
+		if (!content?.contents) continue;
+
+		for (const item of content.contents) {
+			const marker = item?.macroMarkersListItemRenderer;
+			if (!marker) continue;
+
+			const title =
+				marker.title?.simpleText ||
+				marker.title?.runs?.[0]?.text ||
+				"";
+			const startTimeSeconds =
+				marker.onTap?.watchEndpoint?.startTimeSeconds;
+
+			if (title && typeof startTimeSeconds === "number") {
+				chapters.push({
+					title: decodeHtmlEntities(title),
+					startTime: startTimeSeconds * 1000, // Convert to milliseconds
+				});
+			}
+		}
+
+		// If we found chapters, no need to check other panels
+		if (chapters.length > 0) {
+			break;
+		}
+	}
+
+	// Sort chapters by start time
+	chapters.sort((a, b) => a.startTime - b.startTime);
+
+	return chapters;
 }

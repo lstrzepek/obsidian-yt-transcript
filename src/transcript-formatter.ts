@@ -158,6 +158,7 @@ export class TranscriptFormatter {
 		const blocks = getTranscriptBlocks(
 			transcript.lines,
 			options.timestampMod,
+			transcript.chapters,
 		);
 
 		if (blocks.length === 0) {
@@ -166,13 +167,19 @@ export class TranscriptFormatter {
 
 		return blocks
 			.map((block) => {
-				const { quote, quoteTimeOffset } = block;
+				const { quote, quoteTimeOffset, chapter } = block;
 				const timestampStr = formatTimestamp(quoteTimeOffset);
 				const timestampUrl = url
 					? URLDetector.buildTimestampUrl(url, quoteTimeOffset)
 					: "#";
 
-				return `[${timestampStr}](${timestampUrl}) ${quote.trim()}`;
+				const line = `[${timestampStr}](${timestampUrl}) ${quote.trim()}`;
+
+				// Prepend chapter header if this block starts a new chapter
+				if (chapter) {
+					return `\n## ${chapter}\n\n${line}`;
+				}
+				return line;
 			})
 			.join("\n");
 	}

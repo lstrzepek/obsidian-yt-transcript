@@ -1,10 +1,14 @@
 import { requestUrl } from "obsidian";
-import { parseTranscriptXml } from "./api-parser";
-import type { TranscriptConfig, TranscriptResponse } from "./types";
+import {
+	extractChaptersFromNextResponse,
+	parseTranscriptXml,
+} from "./api-parser";
+import type { Chapter, TranscriptConfig, TranscriptResponse } from "./types";
 import { YoutubeTranscriptError } from "./types";
 
 export { YoutubeTranscriptError } from "./types";
 export type {
+	Chapter,
 	TranscriptConfig,
 	TranscriptLine,
 	TranscriptResponse,
@@ -20,6 +24,7 @@ export class YoutubeTranscript {
 	private static readonly INNERTUBE_API_KEY =
 		"AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
 	private static readonly INNERTUBE_PLAYER_URL = `https://www.youtube.com/youtubei/v1/player?key=${YoutubeTranscript.INNERTUBE_API_KEY}`;
+	private static readonly INNERTUBE_NEXT_URL = `https://www.youtube.com/youtubei/v1/next?key=${YoutubeTranscript.INNERTUBE_API_KEY}`;
 
 	// Use ANDROID client like youtube-transcript-api does - it's less restricted
 	private static readonly INNERTUBE_CONTEXT = {
@@ -27,6 +32,16 @@ export class YoutubeTranscript {
 			clientName: "ANDROID",
 			clientVersion: "19.09.37",
 			androidSdkVersion: 30,
+			hl: "en",
+			gl: "US",
+		},
+	};
+
+	// WEB client context for fetching chapters (ANDROID client doesn't return chapters)
+	private static readonly WEB_CONTEXT = {
+		client: {
+			clientName: "WEB",
+			clientVersion: "2.20240101.00.00",
 			hl: "en",
 			gl: "US",
 		},
@@ -104,9 +119,22 @@ export class YoutubeTranscript {
 				`✅ Successfully fetched ${lines.length} transcript lines`,
 			);
 
+			// Fetch chapters from the "next" endpoint
+			let chapters: Chapter[] = [];
+			try {
+				chapters = await this.fetchChapters(videoId, config);
+				if (chapters.length > 0) {
+					console.log(`📚 Found ${chapters.length} chapter(s)`);
+				}
+			} catch (err) {
+				// Chapters are optional, don't fail if we can't fetch them
+				console.log(`ℹ️ No chapters available for this video`);
+			}
+
 			return {
 				title: this.decodeHTML(title),
 				lines,
+				chapters: chapters.length > 0 ? chapters : undefined,
 			};
 		} catch (err: any) {
 			if (err instanceof YoutubeTranscriptError) {
@@ -191,6 +219,40 @@ export class YoutubeTranscript {
 		}
 
 		return data;
+	}
+
+	/**
+	 * Fetches chapter data from YouTube's InnerTube "next" endpoint
+	 */
+	private static async fetchChapters(
+		videoId: string,
+		config?: TranscriptConfig,
+	): Promise<Chapter[]> {
+		const context = {
+			...YoutubeTranscript.WEB_CONTEXT,
+			client: {
+				...YoutubeTranscript.WEB_CONTEXT.client,
+				hl: config?.lang || "en",
+				gl: config?.country || "US",
+			},
+		};
+
+		const requestBody = {
+			context: context,
+			videoId: videoId,
+		};
+
+		const response = await requestUrl({
+			url: YoutubeTranscript.INNERTUBE_NEXT_URL,
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(requestBody),
+		});
+
+		const data = JSON.parse(response.text);
+		return extractChaptersFromNextResponse(data);
 	}
 
 	/**

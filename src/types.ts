@@ -18,9 +18,15 @@ export interface TranscriptConfig {
 	country?: string;
 }
 
+export interface Chapter {
+	title: string;
+	startTime: number; // milliseconds
+}
+
 export interface TranscriptResponse {
 	title: string;
 	lines: TranscriptLine[];
+	chapters?: Chapter[];
 }
 
 export interface TranscriptLine {
@@ -43,4 +49,5 @@ export interface VideoData {
 export interface TranscriptBlock {
 	quote: string;
 	quoteTimeOffset: number;
+	chapter?: string; // Chapter title if this block starts a new chapter
 }

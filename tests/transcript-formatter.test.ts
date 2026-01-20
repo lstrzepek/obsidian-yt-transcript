@@ -180,6 +180,164 @@ describe("TranscriptFormatter", () => {
 			});
 		});
 
+		describe("chapters", () => {
+			it("should include chapter headers in standard format", () => {
+				const transcriptWithChapters: TranscriptResponse = {
+					title: "Video with Chapters",
+					lines: [
+						{ text: "Introduction text", offset: 0, duration: 2000 },
+						{ text: "More intro", offset: 2000, duration: 2000 },
+						{ text: "Chapter one content", offset: 60000, duration: 2000 },
+						{ text: "More chapter one", offset: 62000, duration: 2000 },
+						{ text: "Chapter two content", offset: 120000, duration: 2000 },
+						{ text: "More chapter two", offset: 122000, duration: 2000 },
+					],
+					chapters: [
+						{ title: "Introduction", startTime: 0 },
+						{ title: "Chapter 1: Getting Started", startTime: 60000 },
+						{ title: "Chapter 2: Advanced", startTime: 120000 },
+					],
+				};
+
+				const result = TranscriptFormatter.format(
+					transcriptWithChapters,
+					testUrl,
+					{
+						timestampMod: 2,
+						template: FormatTemplate.STANDARD,
+					},
+				);
+
+				expect(result).toContain("## Introduction");
+				expect(result).toContain("## Chapter 1: Getting Started");
+				expect(result).toContain("## Chapter 2: Advanced");
+			});
+
+			it("should include chapter headers in rich format", () => {
+				const transcriptWithChapters: TranscriptResponse = {
+					title: "Video with Chapters",
+					lines: [
+						{ text: "Introduction text", offset: 0, duration: 2000 },
+						{ text: "More intro", offset: 2000, duration: 2000 },
+						{ text: "Chapter one content", offset: 60000, duration: 2000 },
+					],
+					chapters: [
+						{ title: "Intro", startTime: 0 },
+						{ title: "Main Content", startTime: 60000 },
+					],
+				};
+
+				const result = TranscriptFormatter.format(
+					transcriptWithChapters,
+					testUrl,
+					{
+						timestampMod: 2,
+						template: FormatTemplate.RICH,
+					},
+				);
+
+				expect(result).toContain("## Video with Chapters"); // Title header
+				expect(result).toContain("## Intro");
+				expect(result).toContain("## Main Content");
+			});
+
+			it("should handle transcript without chapters", () => {
+				const transcriptNoChapters: TranscriptResponse = {
+					title: "No Chapters",
+					lines: [
+						{ text: "Some text", offset: 0, duration: 2000 },
+						{ text: "More text", offset: 2000, duration: 2000 },
+					],
+				};
+
+				const result = TranscriptFormatter.format(
+					transcriptNoChapters,
+					testUrl,
+					{
+						timestampMod: 1,
+						template: FormatTemplate.STANDARD,
+					},
+				);
+
+				expect(result).not.toContain("##");
+				expect(result).toContain("Some text");
+			});
+
+			it("should handle transcript with undefined chapters", () => {
+				const transcriptUndefinedChapters: TranscriptResponse = {
+					title: "No Chapters",
+					lines: [
+						{ text: "First line", offset: 0, duration: 2000 },
+						{ text: "Second line", offset: 2000, duration: 2000 },
+						{ text: "Third line", offset: 4000, duration: 2000 },
+					],
+					chapters: undefined,
+				};
+
+				const result = TranscriptFormatter.format(
+					transcriptUndefinedChapters,
+					testUrl,
+					{
+						timestampMod: 2,
+						template: FormatTemplate.STANDARD,
+					},
+				);
+
+				expect(result).not.toContain("##");
+				expect(result).toContain("[00:00]");
+				expect(result).toContain("First line");
+			});
+
+			it("should handle transcript with empty chapters array", () => {
+				const transcriptEmptyChapters: TranscriptResponse = {
+					title: "Empty Chapters",
+					lines: [
+						{ text: "Line one", offset: 0, duration: 2000 },
+						{ text: "Line two", offset: 2000, duration: 2000 },
+					],
+					chapters: [],
+				};
+
+				const result = TranscriptFormatter.format(
+					transcriptEmptyChapters,
+					testUrl,
+					{
+						timestampMod: 1,
+						template: FormatTemplate.STANDARD,
+					},
+				);
+
+				expect(result).not.toContain("##");
+				expect(result).toContain("Line one");
+				expect(result).toContain("Line two");
+			});
+
+			it("should not include chapter headers in rich format when no chapters", () => {
+				const transcriptNoChapters: TranscriptResponse = {
+					title: "Video Without Chapters",
+					lines: [
+						{ text: "Content here", offset: 0, duration: 2000 },
+						{ text: "More content", offset: 2000, duration: 2000 },
+					],
+				};
+
+				const result = TranscriptFormatter.format(
+					transcriptNoChapters,
+					testUrl,
+					{
+						timestampMod: 1,
+						template: FormatTemplate.RICH,
+					},
+				);
+
+				// Should have title header but no chapter headers
+				expect(result).toContain("## Video Without Chapters");
+				// Count ## occurrences - should only be 1 (the title)
+				const headerCount = (result.match(/^## /gm) || []).length;
+				expect(headerCount).toBe(1);
+			});
+		});
+
 		describe("rich template", () => {
 			it("should include video title", () => {
 				const result = TranscriptFormatter.format(

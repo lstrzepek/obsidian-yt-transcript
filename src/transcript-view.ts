@@ -95,12 +95,16 @@ export class TranscriptView extends ItemView {
 	private formatContentToPaste(url: string, blocks: TranscriptBlock[]) {
 		return blocks
 			.map((block) => {
-				const { quote, quoteTimeOffset } = block;
+				const { quote, quoteTimeOffset, chapter } = block;
 				const href = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
 				const formattedBlock = `[${formatTimestamp(
 					quoteTimeOffset,
 				)}](${href}) ${quote}`;
 
+				// Prepend chapter header if present
+				if (chapter) {
+					return `\n## ${chapter}\n\n${formattedBlock}`;
+				}
 				return formattedBlock;
 			})
 			.join("\n");
@@ -134,6 +138,7 @@ export class TranscriptView extends ItemView {
 			const transcriptBlocks = getTranscriptBlocks(
 				data.lines,
 				timestampMod,
+				data.chapters,
 			);
 
 			//Filter transcript blocks based on
@@ -142,7 +147,24 @@ export class TranscriptView extends ItemView {
 			);
 
 			filteredBlocks.forEach((block) => {
-				const { quote, quoteTimeOffset } = block;
+				const { quote, quoteTimeOffset, chapter } = block;
+
+				// Render chapter header if this block starts a new chapter
+				if (chapter) {
+					const chapterEl = createEl("div", {
+						cls: "yt-transcript__chapter-header",
+						text: chapter,
+					});
+					chapterEl.style.fontWeight = "bold";
+					chapterEl.style.marginTop = "15px";
+					chapterEl.style.marginBottom = "8px";
+					chapterEl.style.color = "var(--text-accent)";
+					chapterEl.style.borderBottom =
+						"1px solid var(--background-modifier-border)";
+					chapterEl.style.paddingBottom = "4px";
+					dataContainerEl.appendChild(chapterEl);
+				}
+
 				const blockContainerEl = createEl("div", {
 					cls: "yt-transcript__transcript-block",
 				});
