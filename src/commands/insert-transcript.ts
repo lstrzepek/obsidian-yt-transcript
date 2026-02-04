@@ -1,4 +1,5 @@
-import { Editor } from "obsidian";
+import { Editor, MarkdownView, Plugin } from "obsidian";
+import { BaseCommand, CommandDefinition } from "./base-command";
 import { URLDetector } from "../utils/url-detection";
 import {
 	TranscriptFormatter,
@@ -9,14 +10,27 @@ import { YoutubeTranscript } from "../core/youtube-transcript";
 import { PromptModal } from "../obsidian/prompt-modal";
 import { EditorExtensions } from "../obsidian/editor-extensions";
 import { TranscriptConfig } from "../types";
+import type YTranscriptPlugin from "../plugin";
 
 export interface InsertTranscriptOptions {
 	template?: FormatTemplate;
 	timestampMod?: number;
 }
 
-export class InsertTranscriptCommand {
-	constructor(private plugin: any) {}
+export class InsertTranscriptCommand extends BaseCommand {
+	constructor(protected plugin: YTranscriptPlugin) {
+		super(plugin as Plugin);
+	}
+
+	getDefinition(): CommandDefinition {
+		return {
+			id: "insert-youtube-transcript",
+			name: "Insert YouTube transcript",
+			editorCallback: async (editor: Editor, _: MarkdownView) => {
+				await this.execute(editor);
+			},
+		};
+	}
 
 	/**
 	 * Executes the insert transcript command with default settings

@@ -4,9 +4,10 @@ import {
 	Plugin,
 } from "obsidian";
 import { TranscriptView, TRANSCRIPT_TYPE_VIEW } from "./obsidian/transcript-view";
-import { PromptModal } from "./obsidian/prompt-modal";
 import { EditorExtensions } from "./obsidian/editor-extensions";
 import { InsertTranscriptCommand } from "./commands/insert-transcript";
+import { TranscriptFromTextCommand } from "./commands/transcript-from-text";
+import { TranscriptFromPromptCommand } from "./commands/transcript-from-prompt";
 import { YTranslateSettingTab } from "./obsidian/settings-tab";
 import { DEFAULT_SETTINGS } from "./settings";
 import type { YTranscriptSettings } from "./settings";
@@ -14,49 +15,32 @@ import type { YTranscriptSettings } from "./settings";
 export default class YTranscriptPlugin extends Plugin {
 	settings: YTranscriptSettings;
 	private insertTranscriptCommand: InsertTranscriptCommand;
+	private transcriptFromTextCommand: TranscriptFromTextCommand;
+	private transcriptFromPromptCommand: TranscriptFromPromptCommand;
 
 	async onload() {
 		await this.loadSettings();
 
 		// Initialize commands
 		this.insertTranscriptCommand = new InsertTranscriptCommand(this);
+		this.transcriptFromTextCommand = new TranscriptFromTextCommand(
+			this,
+			(url: string) => this.openView(url),
+		);
+		this.transcriptFromPromptCommand = new TranscriptFromPromptCommand(
+			this,
+			(url: string) => this.openView(url),
+		);
 
 		this.registerView(
 			TRANSCRIPT_TYPE_VIEW,
 			(leaf) => new TranscriptView(leaf, this),
 		);
 
-		this.addCommand({
-			id: "transcript-from-text",
-			name: "Get YouTube transcript from selected url",
-			editorCallback: (editor: Editor, _: MarkdownView) => {
-				const url = EditorExtensions.getSelectedText(editor).trim();
-				this.openView(url);
-			},
-		});
-
-		this.addCommand({
-			id: "transcript-from-prompt",
-			name: "Get YouTube transcript from url prompt",
-			callback: async () => {
-				const prompt = new PromptModal();
-				const url: string = await new Promise((resolve) =>
-					prompt.openAndGetValue(resolve, () => {}),
-				);
-				if (url) {
-					this.openView(url);
-				}
-			},
-		});
-
-		// New mobile-first command
-		this.addCommand({
-			id: "insert-youtube-transcript",
-			name: "Insert YouTube transcript",
-			editorCallback: async (editor: Editor, _: MarkdownView) => {
-				await this.insertTranscriptCommand.execute(editor);
-			},
-		});
+		// Register all commands
+		this.insertTranscriptCommand.register();
+		this.transcriptFromTextCommand.register();
+		this.transcriptFromPromptCommand.register();
 
 		this.addSettingTab(new YTranslateSettingTab(this.app, this));
 	}
