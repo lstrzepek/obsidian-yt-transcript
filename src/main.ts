@@ -8,7 +8,7 @@ import {
 } from "obsidian";
 import { TranscriptView, TRANSCRIPT_TYPE_VIEW } from "src/transcript-view";
 import { PromptModal } from "src/prompt-modal";
-import { EditorExtensions } from "../editor-extensions";
+import { EditorExtensions } from "./editor-extensions";
 import { InsertTranscriptCommand } from "src/commands/insert-transcript";
 
 interface YTranscriptSettings {
