@@ -1,14 +1,14 @@
 import { requestUrl } from "obsidian";
 import { parseTranscriptXml } from "./api-parser";
-import type { TranscriptConfig, TranscriptResponse } from "./types";
-import { YoutubeTranscriptError } from "./types";
+import type { TranscriptConfig, TranscriptResponse } from "../types";
+import { YoutubeTranscriptError } from "../types";
 
-export { YoutubeTranscriptError } from "./types";
+export { YoutubeTranscriptError } from "../types";
 export type {
 	TranscriptConfig,
 	TranscriptLine,
 	TranscriptResponse,
-} from "./types";
+} from "../types";
 
 /**
  * YouTube transcript fetcher using InnerTube Player API.

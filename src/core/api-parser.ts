@@ -1,5 +1,5 @@
-import type { TranscriptLine } from "./types";
-import { YoutubeTranscriptError } from "./types";
+import type { TranscriptLine } from "../types";
+import { YoutubeTranscriptError } from "../types";
 
 const YOUTUBE_TITLE_REGEX = new RegExp(
 	/<meta\s+name="title"\s+content="([^"]*)\">/,

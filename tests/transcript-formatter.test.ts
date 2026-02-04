@@ -2,7 +2,7 @@ import {
 	TranscriptFormatter,
 	FormatOptions,
 	FormatTemplate,
-} from "../src/transcript-formatter";
+} from "../src/core/transcript-formatter";
 import { TranscriptResponse } from "../src/types";
 
 describe("TranscriptFormatter", () => {

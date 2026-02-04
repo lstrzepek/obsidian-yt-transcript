@@ -1,13 +1,13 @@
-import YTranscriptPlugin from "src/main";
+import YTranscriptPlugin from "../plugin";
 import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
 import {
 	TranscriptResponse,
 	YoutubeTranscript,
 	YoutubeTranscriptError,
-} from "./youtube-transcript";
-import { formatTimestamp } from "./timestampt-utils";
+} from "../core/youtube-transcript";
+import { formatTimestamp } from "../utils/timestampt-utils";
 import { getTranscriptBlocks, highlightText } from "./render-utils";
-import { TranscriptBlock } from "./types";
+import { TranscriptBlock } from "../types";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {

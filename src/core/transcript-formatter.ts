@@ -1,7 +1,7 @@
-import { TranscriptResponse } from "./types";
-import { getTranscriptBlocks } from "./render-utils";
-import { formatTimestamp } from "./timestampt-utils";
-import { URLDetector } from "./url-detection";
+import { TranscriptResponse } from "../types";
+import { getTranscriptBlocks } from "../obsidian/render-utils";
+import { formatTimestamp } from "../utils/timestampt-utils";
+import { URLDetector } from "../utils/url-detection";
 
 export enum FormatTemplate {
 	MINIMAL = "minimal",

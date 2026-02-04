@@ -1,4 +1,4 @@
-import { formatTimestamp } from "../src/timestampt-utils";
+import { formatTimestamp } from "../src/utils/timestampt-utils";
 
 describe("formatTimestamp", () => {
 	it.each([

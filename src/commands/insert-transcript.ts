@@ -1,13 +1,13 @@
 import { Editor } from "obsidian";
-import { URLDetector } from "../url-detection";
+import { URLDetector } from "../utils/url-detection";
 import {
 	TranscriptFormatter,
 	FormatTemplate,
 	FormatOptions,
-} from "../transcript-formatter";
-import { YoutubeTranscript } from "../youtube-transcript";
-import { PromptModal } from "../prompt-modal";
-import { EditorExtensions } from "../editor-extensions";
+} from "../core/transcript-formatter";
+import { YoutubeTranscript } from "../core/youtube-transcript";
+import { PromptModal } from "../obsidian/prompt-modal";
+import { EditorExtensions } from "../obsidian/editor-extensions";
 import { TranscriptConfig } from "../types";
 
 export interface InsertTranscriptOptions {

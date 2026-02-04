@@ -1,4 +1,4 @@
-import { URLDetector } from "../src/url-detection";
+import { URLDetector } from "../src/utils/url-detection";
 
 describe("URLDetector", () => {
 	describe("isValidYouTubeUrl", () => {
