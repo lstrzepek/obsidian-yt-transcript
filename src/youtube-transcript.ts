@@ -21,12 +21,12 @@ export class YoutubeTranscript {
 		"AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
 	private static readonly INNERTUBE_PLAYER_URL = `https://www.youtube.com/youtubei/v1/player?key=${YoutubeTranscript.INNERTUBE_API_KEY}`;
 
-	// Use ANDROID client like youtube-transcript-api does - it's less restricted
+	// Use IOS client - ANDROID client no longer returns captions (early 2026).
+	// IOS client returns caption track URLs that work without PO tokens.
 	private static readonly INNERTUBE_CONTEXT = {
 		client: {
-			clientName: "ANDROID",
-			clientVersion: "19.09.37",
-			androidSdkVersion: 30,
+			clientName: "IOS",
+			clientVersion: "20.10.38",
 			hl: "en",
 			gl: "US",
 		},
@@ -155,7 +155,7 @@ export class YoutubeTranscript {
 			videoId: videoId,
 		};
 
-		console.log(`🔄 Calling InnerTube Player API with ANDROID client...`);
+		console.log(`🔄 Calling InnerTube Player API with IOS client...`);
 
 		const response = await requestUrl({
 			url: YoutubeTranscript.INNERTUBE_PLAYER_URL,
@@ -163,7 +163,7 @@ export class YoutubeTranscript {
 			headers: {
 				"Content-Type": "application/json",
 				"User-Agent":
-					"com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip",
+					"com.google.ios.youtube/20.10.38 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)",
 			},
 			body: JSON.stringify(requestBody),
 		});
