@@ -1,0 +1,30 @@
+name: Create release tag
+
+on:
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "Tag name to create (e.g. 1.3.1)"
+                required: true
+                default: "1.3.1"
+
+jobs:
+    create-tag:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Create and push tag
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  if git tag -l | grep -qx "${{ github.event.inputs.tag }}"; then
+                    echo "Tag ${{ github.event.inputs.tag }} already exists, skipping."
+                    exit 0
+                  fi
+                  git tag -a "${{ github.event.inputs.tag }}" -m "Release ${{ github.event.inputs.tag }}"
+                  git push origin "${{ github.event.inputs.tag }}"
