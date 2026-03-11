@@ -22,5 +22,9 @@ jobs:
               run: |
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
+                  if git tag -l | grep -qx "${{ github.event.inputs.tag }}"; then
+                    echo "Tag ${{ github.event.inputs.tag }} already exists, skipping."
+                    exit 0
+                  fi
                   git tag -a "${{ github.event.inputs.tag }}" -m "Release ${{ github.event.inputs.tag }}"
                   git push origin "${{ github.event.inputs.tag }}"
