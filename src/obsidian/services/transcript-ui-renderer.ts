@@ -1,4 +1,5 @@
 import { YoutubeTranscriptError } from "../../core/youtube-transcript";
+import { AppError } from "./error-handling-service";
 
 /**
  * Service responsible for rendering UI elements (headers, loaders, errors)
@@ -64,10 +65,11 @@ export class TranscriptUIRenderer {
 
 	/**
 	 * Renders an error state
+	 * Handles both YoutubeTranscriptError and AppError
 	 * @param container - Container to append error to
-	 * @param error - The error to display
+	 * @param error - The error to display (YoutubeTranscriptError or AppError)
 	 */
-	renderError(container: HTMLElement, error: YoutubeTranscriptError): void {
+	renderError(container: HTMLElement, error: YoutubeTranscriptError | AppError): void {
 		container.empty();
 
 		const titleEl = container.createEl("div", {
@@ -75,11 +77,29 @@ export class TranscriptUIRenderer {
 		});
 		titleEl.style.marginBottom = "5px";
 
+		// Get the error message
+		const message = error instanceof YoutubeTranscriptError
+			? error.message
+			: (error as AppError).message || "Unknown error";
+
+		// Get additional details if available
+		const details = (error as AppError).details;
+
 		const messageEl = container.createEl("div", {
-			text: error.message,
+			text: message,
 		});
 		messageEl.style.color = "var(--text-muted)";
 		messageEl.style.fontSize = "var(--font-ui-small)";
+
+		// Add details if available
+		if (details) {
+			const detailsEl = container.createEl("div", {
+				text: details,
+			});
+			detailsEl.style.color = "var(--text-muted)";
+			detailsEl.style.fontSize = "var(--font-ui-small)";
+			detailsEl.style.marginTop = "5px";
+		}
 	}
 
 	/**
