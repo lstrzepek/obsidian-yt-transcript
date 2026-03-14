@@ -10,31 +10,31 @@ jobs:
         runs-on: ubuntu-latest
         name: Check code formatting
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Setup node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: 16
+                  node-version: 20
             - run: npm run check-format
     build:
         runs-on: ubuntu-latest
         name: Build project
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Setup node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: 16
+                  node-version: 20
             - run: npm install
             - run: npm run build
     test:
         runs-on: ubuntu-latest
         name: Test project
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Setup node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
-                  node-version: 16
+                  node-version: 20
             - run: npm install
             - run: npm run test
