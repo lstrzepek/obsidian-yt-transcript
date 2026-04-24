@@ -4,7 +4,7 @@ import {
 	getCaptionTracksFromPlayer,
 	getCaptionTracksFromPage,
 	parseTranscriptXml,
-} from "../src/api-parser";
+} from "src/transcript/parse-xml";
 
 describe("extractVideoTitle", () => {
 	it("should extract title from YouTube page HTML", () => {

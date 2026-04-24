@@ -1,13 +1,17 @@
-import YTranscriptPlugin from "src/main";
-import { ItemView, WorkspaceLeaf, Menu } from "obsidian";
+import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
+
 import {
-	TranscriptResponse,
-	YoutubeTranscript,
+	fetchTranscript,
 	YoutubeTranscriptError,
-} from "./youtube-transcript";
-import { formatTimestamp } from "./timestampt-utils";
-import { getTranscriptBlocks, highlightText } from "./render-utils";
-import { TranscriptBlock } from "./types";
+} from "src/transcript/fetch";
+import type { TranscriptResponse } from "src/transcript/fetch";
+import { getTranscriptBlocks } from "src/transcript/blocks";
+import { formatTimestamp } from "src/transcript/timestamp";
+import type { TranscriptBlock } from "src/transcript/types";
+
+import { obsidianHttp } from "../http";
+import { highlightText } from "../highlight";
+import type YTranscriptPlugin from "../plugin";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
@@ -246,7 +250,7 @@ export class TranscriptView extends ItemView {
 			this.renderLoader();
 
 			//Get the youtube video title and transcript at the same time
-			const data = await YoutubeTranscript.getTranscript(url, {
+			const data = await fetchTranscript(url, obsidianHttp, {
 				lang,
 				country,
 			});
@@ -310,7 +314,7 @@ export class TranscriptView extends ItemView {
 		return TRANSCRIPT_TYPE_VIEW;
 	}
 	getDisplayText(): string {
-		return "YouTube Transcript";
+		return `Video: ${this.videoTitle ?? "No name"}`
 	}
 	getIcon(): string {
 		return "scroll";

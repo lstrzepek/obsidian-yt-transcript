@@ -1,7 +1,8 @@
-import { TranscriptResponse } from "./types";
-import { getTranscriptBlocks } from "./render-utils";
-import { formatTimestamp } from "./timestampt-utils";
-import { URLDetector } from "./url-detection";
+import { URLDetector } from "src/youtube/url";
+
+import { getTranscriptBlocks } from "./blocks";
+import { formatTimestamp } from "./timestamp";
+import type { TranscriptResponse } from "./types";
 
 export enum FormatTemplate {
 	MINIMAL = "minimal",

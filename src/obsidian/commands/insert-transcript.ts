@@ -1,14 +1,17 @@
 import { Editor } from "obsidian";
-import { URLDetector } from "../url-detection";
+
+import { fetchTranscript } from "src/transcript/fetch";
 import {
-	TranscriptFormatter,
-	FormatTemplate,
 	FormatOptions,
-} from "../transcript-formatter";
-import { YoutubeTranscript } from "../youtube-transcript";
-import { PromptModal } from "../prompt-modal";
+	FormatTemplate,
+	TranscriptFormatter,
+} from "src/transcript/format";
+import type { TranscriptConfig } from "src/transcript/types";
+import { URLDetector } from "src/youtube/url";
+
 import { EditorExtensions } from "../editor-extensions";
-import { TranscriptConfig } from "../types";
+import { obsidianHttp } from "../http";
+import { PromptModal } from "../modals/prompt-modal";
 
 export interface InsertTranscriptOptions {
 	template?: FormatTemplate;
@@ -46,8 +49,9 @@ export class InsertTranscriptCommand {
 
 			// Fetch transcript
 			const transcriptConfig = this.createTranscriptConfig();
-			const transcript = await YoutubeTranscript.getTranscript(
+			const transcript = await fetchTranscript(
 				url,
+				obsidianHttp,
 				transcriptConfig,
 			);
 

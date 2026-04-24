@@ -1,5 +1,5 @@
 import { Editor, EditorPosition } from "obsidian";
-import { getUrlFromText } from "./url-utils";
+import { getUrlFromText } from "./url-text-utils";
 
 export class EditorExtensions {
 	public static getSelectedText(editor: Editor): string {

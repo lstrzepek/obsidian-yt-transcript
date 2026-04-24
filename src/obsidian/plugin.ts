@@ -6,10 +6,14 @@ import {
 	PluginSettingTab,
 	Setting,
 } from "obsidian";
-import { TranscriptView, TRANSCRIPT_TYPE_VIEW } from "src/transcript-view";
-import { PromptModal } from "src/prompt-modal";
-import { EditorExtensions } from "src/editor-extensions";
-import { InsertTranscriptCommand } from "src/commands/insert-transcript";
+
+import { InsertTranscriptCommand } from "./commands/insert-transcript";
+import { EditorExtensions } from "./editor-extensions";
+import { PromptModal } from "./modals/prompt-modal";
+import {
+	TRANSCRIPT_TYPE_VIEW,
+	TranscriptView,
+} from "./views/transcript-view";
 
 interface YTranscriptSettings {
 	timestampMod: number;

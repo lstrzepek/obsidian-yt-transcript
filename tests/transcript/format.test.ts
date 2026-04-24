@@ -1,9 +1,9 @@
 import {
-	TranscriptFormatter,
 	FormatOptions,
 	FormatTemplate,
-} from "../src/transcript-formatter";
-import { TranscriptResponse } from "../src/types";
+	TranscriptFormatter,
+} from "src/transcript/format";
+import { TranscriptResponse } from "src/transcript/types";
 
 describe("TranscriptFormatter", () => {
 	const mockTranscriptResponse: TranscriptResponse = {
