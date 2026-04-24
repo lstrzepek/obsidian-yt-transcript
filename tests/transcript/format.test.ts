@@ -1,11 +1,8 @@
-import {
-	FormatOptions,
-	FormatTemplate,
-	TranscriptFormatter,
-} from "src/transcript/format";
-import { TranscriptResponse } from "src/transcript/types";
+import type { FormatOptions } from "src/transcript/format";
+import { formatTranscript } from "src/transcript/format";
+import type { TranscriptResponse } from "src/transcript/types";
 
-describe("TranscriptFormatter", () => {
+describe("formatTranscript", () => {
 	const mockTranscriptResponse: TranscriptResponse = {
 		title: "Test Video Title",
 		lines: [
@@ -27,12 +24,12 @@ describe("TranscriptFormatter", () => {
 	describe("format", () => {
 		describe("minimal template", () => {
 			it("should return plain text without timestamps", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 5,
-						template: FormatTemplate.MINIMAL,
+						template: "minimal",
 					},
 				);
 				expect(result).toBe(
@@ -49,12 +46,12 @@ describe("TranscriptFormatter", () => {
 						{ text: "Third", offset: 2000, duration: 1000 },
 					],
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					simpleTranscript,
 					testUrl,
 					{
 						timestampMod: 1,
-						template: FormatTemplate.MINIMAL,
+						template: "minimal",
 					},
 				);
 				expect(result).toBe("First Second Third");
@@ -68,12 +65,12 @@ describe("TranscriptFormatter", () => {
 						{ text: "   Text   ", offset: 1000, duration: 1000 },
 					],
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					spacedTranscript,
 					testUrl,
 					{
 						timestampMod: 1,
-						template: FormatTemplate.MINIMAL,
+						template: "minimal",
 					},
 				);
 				expect(result).toBe("Spaced Text");
@@ -82,12 +79,12 @@ describe("TranscriptFormatter", () => {
 
 		describe("standard template", () => {
 			it("should include clickable timestamps", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 2,
-						template: FormatTemplate.STANDARD,
+						template: "standard",
 					},
 				);
 
@@ -111,12 +108,12 @@ describe("TranscriptFormatter", () => {
 						{ text: "One hour", offset: 3600000, duration: 1000 },
 					],
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					timestampTranscript,
 					testUrl,
 					{
 						timestampMod: 1,
-						template: FormatTemplate.STANDARD,
+						template: "standard",
 					},
 				);
 
@@ -126,12 +123,12 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should include proper YouTube links with time parameters", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 2,
-						template: FormatTemplate.STANDARD,
+						template: "standard",
 					},
 				);
 
@@ -145,12 +142,12 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle transcript blocks based on timestampMod", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 3,
-						template: FormatTemplate.STANDARD,
+						template: "standard",
 					},
 				);
 
@@ -166,12 +163,12 @@ describe("TranscriptFormatter", () => {
 			it("should handle URLs with existing parameters", () => {
 				const urlWithParams =
 					"https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLtest";
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					urlWithParams,
 					{
 						timestampMod: 2,
-						template: FormatTemplate.STANDARD,
+						template: "standard",
 					},
 				);
 
@@ -182,24 +179,24 @@ describe("TranscriptFormatter", () => {
 
 		describe("rich template", () => {
 			it("should include video title", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 2,
-						template: FormatTemplate.RICH,
+						template: "rich",
 					},
 				);
 				expect(result).toContain("## Test Video Title");
 			});
 
 			it("should include source URL", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 2,
-						template: FormatTemplate.RICH,
+						template: "rich",
 					},
 				);
 				expect(result).toContain(
@@ -208,12 +205,12 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should include retrieval date", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 2,
-						template: FormatTemplate.RICH,
+						template: "rich",
 					},
 				);
 				const today = new Date().toISOString().split("T")[0];
@@ -221,12 +218,12 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should include all standard formatting", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
 						timestampMod: 2,
-						template: FormatTemplate.RICH,
+						template: "rich",
 					},
 				);
 
@@ -250,12 +247,12 @@ describe("TranscriptFormatter", () => {
 						{ text: "Test content", offset: 0, duration: 1000 },
 					],
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					noTitleTranscript,
 					testUrl,
 					{
 						timestampMod: 1,
-						template: FormatTemplate.RICH,
+						template: "rich",
 					},
 				);
 				expect(result).toContain("## YouTube Transcript");
@@ -268,12 +265,12 @@ describe("TranscriptFormatter", () => {
 						{ text: "Test content", offset: 0, duration: 1000 },
 					],
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					noTitleTranscript,
 					testUrl,
 					{
 						timestampMod: 1,
-						template: FormatTemplate.RICH,
+						template: "rich",
 					},
 				);
 				expect(result).toContain("## YouTube Transcript");
@@ -284,7 +281,7 @@ describe("TranscriptFormatter", () => {
 			const defaultOptions: FormatOptions = { timestampMod: 5 };
 
 			it("should use default template when not specified", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					defaultOptions,
@@ -297,7 +294,7 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle invalid template types gracefully", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{
@@ -314,9 +311,9 @@ describe("TranscriptFormatter", () => {
 			it("should apply timestampMod correctly across all templates", () => {
 				const optionsWithMod: FormatOptions = {
 					timestampMod: 2,
-					template: FormatTemplate.STANDARD,
+					template: "standard",
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					optionsWithMod,
@@ -334,12 +331,12 @@ describe("TranscriptFormatter", () => {
 					title: "Empty Test",
 					lines: [],
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					emptyTranscript,
 					testUrl,
 					{
 						timestampMod: 5,
-						template: FormatTemplate.STANDARD,
+						template: "standard",
 					},
 				);
 				expect(result).toBe("");
@@ -352,19 +349,19 @@ describe("TranscriptFormatter", () => {
 						{ text: "Only one line", offset: 0, duration: 2000 },
 					],
 				};
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					singleLineTranscript,
 					testUrl,
 					{
 						timestampMod: 1,
-						template: FormatTemplate.MINIMAL,
+						template: "minimal",
 					},
 				);
 				expect(result).toBe("Only one line");
 			});
 
 			it("should handle null transcript response", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					null as any,
 					testUrl,
 					{ timestampMod: 5 },
@@ -373,7 +370,7 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle undefined transcript response", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					undefined as any,
 					testUrl,
 					{ timestampMod: 5 },
@@ -382,7 +379,7 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle null URL", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					null as any,
 					{ timestampMod: 5 },
@@ -391,7 +388,7 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle empty URL", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					"",
 					{ timestampMod: 5 },
@@ -400,7 +397,7 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle zero timestampMod", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{ timestampMod: 0 },
@@ -410,7 +407,7 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle negative timestampMod", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{ timestampMod: -1 },
@@ -420,7 +417,7 @@ describe("TranscriptFormatter", () => {
 			});
 
 			it("should handle timestampMod larger than transcript length", () => {
-				const result = TranscriptFormatter.format(
+				const result = formatTranscript(
 					mockTranscriptResponse,
 					testUrl,
 					{ timestampMod: 100 },

@@ -8,7 +8,7 @@ import {
 } from "obsidian";
 
 import { InsertTranscriptCommand } from "./commands/insert-transcript";
-import { EditorExtensions } from "./editor-extensions";
+import { getSelectedText } from "./editor-extensions";
 import { PromptModal } from "./modals/prompt-modal";
 import {
 	TRANSCRIPT_TYPE_VIEW,
@@ -48,7 +48,7 @@ export default class YTranscriptPlugin extends Plugin {
 			id: "transcript-from-text",
 			name: "Get YouTube transcript from selected url",
 			editorCallback: (editor: Editor, _: MarkdownView) => {
-				const url = EditorExtensions.getSelectedText(editor).trim();
+				const url = getSelectedText(editor).trim();
 				this.openView(url);
 			},
 		});
@@ -76,7 +76,7 @@ export default class YTranscriptPlugin extends Plugin {
 			},
 		});
 
-		this.addSettingTab(new YTranslateSettingTab(this.app, this));
+		this.addSettingTab(new YTranscriptSettingTab(this.app, this));
 	}
 
 	async openView(url: string) {
@@ -107,7 +107,7 @@ export default class YTranscriptPlugin extends Plugin {
 	}
 }
 
-class YTranslateSettingTab extends PluginSettingTab {
+class YTranscriptSettingTab extends PluginSettingTab {
 	plugin: YTranscriptPlugin;
 	values: Record<string, string>;
 

@@ -2,7 +2,7 @@ import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
 
 import {
 	fetchTranscript,
-	YoutubeTranscriptError,
+	YouTubeTranscriptError,
 } from "src/transcript/fetch";
 import type { TranscriptResponse } from "src/transcript/fetch";
 import { getTranscriptBlocks } from "src/transcript/blocks";
@@ -70,10 +70,11 @@ export class TranscriptView extends ItemView {
 		data: TranscriptResponse,
 		timestampMod: number,
 	) {
-		const searchInputEl = this.contentEl.createEl("input");
+		const searchInputEl = this.contentEl.createEl("input", {
+			cls: "yt-transcript__search-input",
+		});
 		searchInputEl.type = "text";
 		searchInputEl.placeholder = "Search...";
-		searchInputEl.style.marginBottom = "20px";
 		searchInputEl.addEventListener("input", (e) => {
 			const searchFilter = (e.target as HTMLInputElement).value;
 			this.renderTranscriptionBlocks(
@@ -90,10 +91,10 @@ export class TranscriptView extends ItemView {
 	 * @param title - the title of the video
 	 */
 	private renderVideoTitle(title: string) {
-		const titleEl = this.contentEl.createEl("div");
-		titleEl.innerHTML = title;
-		titleEl.style.fontWeight = "bold";
-		titleEl.style.marginBottom = "20px";
+		this.contentEl.createEl("div", {
+			text: title,
+			cls: "yt-transcript__video-title",
+		});
 	}
 
 	private formatContentToPaste(url: string, blocks: TranscriptBlock[]) {
@@ -158,7 +159,6 @@ export class TranscriptView extends ItemView {
 						href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
 					},
 				});
-				linkEl.style.marginBottom = "5px";
 
 				const span = dataContainerEl.createEl("span", {
 					text: quote,
@@ -286,7 +286,7 @@ export class TranscriptView extends ItemView {
 			}
 		} catch (err: unknown) {
 			let errorMessage = "";
-			if (err instanceof YoutubeTranscriptError) {
+			if (err instanceof YouTubeTranscriptError) {
 				errorMessage = err.message;
 			}
 
@@ -297,16 +297,12 @@ export class TranscriptView extends ItemView {
 			} else {
 				this.errorContainerEl.empty();
 			}
-			const titleEl = this.errorContainerEl.createEl("div", {
+			this.errorContainerEl.addClass("yt-transcript__error");
+			this.errorContainerEl.createEl("div", {
 				text: "Error loading transcript",
+				cls: "yt-transcript__error-title",
 			});
-			titleEl.style.marginBottom = "5px";
-
-			const messageEl = this.errorContainerEl.createEl("div", {
-				text: errorMessage,
-			});
-			messageEl.style.color = "var(--text-muted)";
-			messageEl.style.fontSize = "var(--font-ui-small)";
+			this.errorContainerEl.createEl("div", { text: errorMessage });
 		}
 	}
 

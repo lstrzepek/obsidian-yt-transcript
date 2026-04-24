@@ -1,7 +1,7 @@
-export class YoutubeTranscriptError extends Error {
+export class YouTubeTranscriptError extends Error {
 	constructor(err: unknown) {
 		if (!(err instanceof Error)) {
-			super("");
+			super("Unknown transcript error");
 			return;
 		}
 
@@ -27,17 +27,6 @@ export interface TranscriptLine {
 	text: string;
 	duration: number;
 	offset: number;
-}
-
-export interface TranscriptRequest {
-	url: string;
-	headers?: Record<string, string>;
-	body?: string;
-}
-
-export interface VideoData {
-	title: string;
-	transcriptRequest: TranscriptRequest;
 }
 
 export interface TranscriptBlock {

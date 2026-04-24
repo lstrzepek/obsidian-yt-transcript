@@ -1,15 +1,18 @@
-import { Editor } from "obsidian";
+import { Editor, Notice } from "obsidian";
 
 import { fetchTranscript } from "src/transcript/fetch";
 import {
-	FormatOptions,
-	FormatTemplate,
-	TranscriptFormatter,
+	formatTranscript,
+	type FormatOptions,
+	type FormatTemplate,
 } from "src/transcript/format";
 import type { TranscriptConfig } from "src/transcript/types";
-import { URLDetector } from "src/youtube/url";
+import {
+	extractYouTubeUrlFromText,
+	isValidYouTubeUrl,
+} from "src/youtube/url";
 
-import { EditorExtensions } from "../editor-extensions";
+import { getSelectedText } from "../editor-extensions";
 import { obsidianHttp } from "../http";
 import { PromptModal } from "../modals/prompt-modal";
 
@@ -18,167 +21,117 @@ export interface InsertTranscriptOptions {
 	timestampMod?: number;
 }
 
-export class InsertTranscriptCommand {
-	constructor(private plugin: any) {}
+interface CommandContext {
+	settings?: {
+		lang?: string;
+		country?: string;
+		timestampMod?: number;
+	};
+}
 
-	/**
-	 * Executes the insert transcript command with default settings
-	 */
+export class InsertTranscriptCommand {
+	constructor(private context: CommandContext) {}
+
 	async execute(editor: Editor): Promise<void> {
 		await this.executeWithOptions(editor, {});
 	}
 
-	/**
-	 * Executes the insert transcript command with custom options
-	 */
 	async executeWithOptions(
 		editor: Editor,
 		options: InsertTranscriptOptions,
 	): Promise<void> {
 		try {
-			// Get YouTube URL with user confirmation
 			const url = await this.getYouTubeUrlWithConfirmation(editor);
-			if (!url) {
-				return; // User cancelled or no URL found
+			if (!url) return;
+
+			if (!isValidYouTubeUrl(url)) {
+				new Notice("Not a valid YouTube URL.");
+				return;
 			}
 
-			// Validate URL
-			if (!URLDetector.isValidYouTubeUrl(url)) {
-				return; // Invalid YouTube URL
-			}
-
-			// Fetch transcript
-			const transcriptConfig = this.createTranscriptConfig();
 			const transcript = await fetchTranscript(
 				url,
 				obsidianHttp,
-				transcriptConfig,
+				this.transcriptConfig(),
 			);
 
-			// Validate transcript
-			if (
-				!transcript ||
-				!transcript.lines ||
-				transcript.lines.length === 0
-			) {
-				return; // No transcript available
+			if (!transcript?.lines?.length) {
+				new Notice("No transcript available for this video.");
+				return;
 			}
 
-			// Format transcript
-			const formatOptions = this.mergeFormatOptions(options);
-			const formattedContent = TranscriptFormatter.format(
+			const formatted = formatTranscript(
 				transcript,
 				url,
-				formatOptions,
+				this.mergeFormatOptions(options),
 			);
+			if (!formatted.trim()) return;
 
-			// Validate formatted content
-			if (!formattedContent || formattedContent.trim().length === 0) {
-				return; // Nothing to insert
-			}
-
-			// Insert at cursor position
-			const cursor = editor.getCursor();
-			editor.replaceRange(formattedContent, cursor);
+			editor.replaceRange(formatted, editor.getCursor());
 		} catch (error) {
-			// Silently fail - errors are expected (network issues, no transcript, etc.)
-			console.error("Insert transcript failed:", error);
+			const message =
+				error instanceof Error ? error.message : "Unknown error";
+			new Notice(`Insert transcript failed: ${message}`);
 		}
 	}
 
-	/**
-	 * Gets YouTube URL with user confirmation via prompt
-	 * Always shows prompt, but pre-populates with detected URL
-	 */
 	private async getYouTubeUrlWithConfirmation(
 		editor: Editor,
 	): Promise<string | null> {
-		// Try to detect URL from selection first, then clipboard
 		const detectedUrl = await this.detectYouTubeUrl(editor);
 
-		// Always show prompt, but pre-populate with detected URL
 		try {
 			const prompt = new PromptModal(detectedUrl || undefined);
 			const userUrl = await new Promise<string>((resolve, reject) => {
 				prompt.openAndGetValue(resolve, reject);
 			});
-
-			// Return the user's input (might be same as detected, or user might have changed it)
 			return userUrl.trim() || null;
-		} catch (error) {
-			// User cancelled
+		} catch {
 			return null;
 		}
 	}
 
-	/**
-	 * Detects YouTube URL from selection or clipboard (for pre-populating prompt)
-	 */
 	private async detectYouTubeUrl(editor: Editor): Promise<string | null> {
-		// 1. Try to get URL from selection
 		const selectionUrl = this.getUrlFromSelection(editor);
-		if (selectionUrl) {
-			return selectionUrl;
-		}
+		if (selectionUrl) return selectionUrl;
 
-		// 2. Try to get URL from clipboard
-		const clipboardUrl = await this.getUrlFromClipboard();
-		if (clipboardUrl) {
-			return clipboardUrl;
-		}
-
-		// 3. No URL detected
-		return null;
+		return this.getUrlFromClipboard();
 	}
 
-	/**
-	 * Gets URL from current editor selection
-	 */
 	private getUrlFromSelection(editor: Editor): string | null {
 		try {
 			const selectedText = editor.somethingSelected()
 				? editor.getSelection()
-				: EditorExtensions.getSelectedText(editor);
-
-			return URLDetector.extractYouTubeUrlFromText(selectedText);
-		} catch (error) {
+				: getSelectedText(editor);
+			return extractYouTubeUrlFromText(selectedText);
+		} catch {
 			return null;
 		}
 	}
 
-	/**
-	 * Gets URL from system clipboard
-	 */
 	private async getUrlFromClipboard(): Promise<string | null> {
 		try {
 			const clipboardText = await navigator.clipboard.readText();
-			return URLDetector.extractYouTubeUrlFromText(clipboardText);
-		} catch (error) {
-			// Clipboard access might be denied
+			return extractYouTubeUrlFromText(clipboardText);
+		} catch {
 			return null;
 		}
 	}
 
-	/**
-	 * Creates transcript config from plugin settings
-	 */
-	private createTranscriptConfig(): TranscriptConfig {
+	private transcriptConfig(): TranscriptConfig {
 		return {
-			lang: this.plugin.settings?.lang,
-			country: this.plugin.settings?.country,
+			lang: this.context.settings?.lang,
+			country: this.context.settings?.country,
 		};
 	}
 
-	/**
-	 * Merges user options with plugin settings
-	 */
 	private mergeFormatOptions(
 		options: InsertTranscriptOptions,
 	): FormatOptions {
 		return {
-			template: options.template || FormatTemplate.STANDARD,
+			template: options.template ?? "standard",
 			timestampMod:
-				options.timestampMod || this.plugin.settings?.timestampMod || 5,
+				options.timestampMod ?? this.context.settings?.timestampMod ?? 5,
 		};
 	}
 }

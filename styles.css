@@ -1,16 +1,20 @@
-/*
+.yt-transcript__video-title {
+	font-weight: bold;
+	margin-bottom: 20px;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
+.yt-transcript__search-input {
+	margin-bottom: 20px;
+}
 
 .yt-transcript__transcript-block {
 	display: flex;
 	flex-direction: column;
 	margin-bottom: 25px;
+}
+
+.yt-transcript__transcript-block > a {
+	margin-bottom: 5px;
 }
 
 .yt-transcript__transcript-block > span {
@@ -22,4 +26,13 @@ If your plugin does not need CSS, delete this file.
 	padding: 0 2px;
 	border-radius: 2px;
 	font-weight: bold;
+}
+
+.yt-transcript__error {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.yt-transcript__error-title {
+	margin-bottom: 5px;
 }

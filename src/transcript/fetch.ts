@@ -1,9 +1,9 @@
 import { parseTranscriptXml } from "./parse-xml";
 import type { HttpClient } from "./http";
 import type { TranscriptConfig, TranscriptResponse } from "./types";
-import { YoutubeTranscriptError } from "./types";
+import { YouTubeTranscriptError } from "./types";
 
-export { YoutubeTranscriptError } from "./types";
+export { YouTubeTranscriptError } from "./types";
 export type {
 	TranscriptConfig,
 	TranscriptLine,
@@ -36,7 +36,7 @@ export async function fetchTranscript(
 	try {
 		const videoId = extractVideoIdFromUrl(url);
 		if (!videoId) {
-			throw new YoutubeTranscriptError(
+			throw new YouTubeTranscriptError(
 				new Error("Invalid YouTube URL - could not extract video ID"),
 			);
 		}
@@ -47,7 +47,7 @@ export async function fetchTranscript(
 		const captionsData =
 			playerData.captions?.playerCaptionsTracklistRenderer;
 		if (!captionsData || !captionsData.captionTracks) {
-			throw new YoutubeTranscriptError(
+			throw new YouTubeTranscriptError(
 				new Error("No captions available for this video"),
 			);
 		}
@@ -61,7 +61,7 @@ export async function fetchTranscript(
 			const availableLangs = captionsData.captionTracks
 				.map((t: any) => t.languageCode)
 				.join(", ");
-			throw new YoutubeTranscriptError(
+			throw new YouTubeTranscriptError(
 				new Error(
 					`No transcript found for language '${langCode}'. Available: ${availableLangs}`,
 				),
@@ -75,10 +75,10 @@ export async function fetchTranscript(
 			lines,
 		};
 	} catch (err: any) {
-		if (err instanceof YoutubeTranscriptError) {
+		if (err instanceof YouTubeTranscriptError) {
 			throw err;
 		}
-		throw new YoutubeTranscriptError(err);
+		throw new YouTubeTranscriptError(err);
 	}
 }
 
