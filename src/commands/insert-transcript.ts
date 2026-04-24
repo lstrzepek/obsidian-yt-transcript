@@ -7,7 +7,7 @@ import {
 } from "../transcript-formatter";
 import { YoutubeTranscript } from "../youtube-transcript";
 import { PromptModal } from "../prompt-modal";
-import { EditorExtensions } from "../../editor-extensions";
+import { EditorExtensions } from "../editor-extensions";
 import { TranscriptConfig } from "../types";
 
 export interface InsertTranscriptOptions {

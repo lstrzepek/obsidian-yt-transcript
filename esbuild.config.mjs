@@ -36,7 +36,6 @@ esbuild
 		define: {
 			global: "globalThis",
 		},
-		inject: ["./buffer-polyfill.js"],
 		format: "cjs",
 //		watch: !prod,
 		target: "es2018",
