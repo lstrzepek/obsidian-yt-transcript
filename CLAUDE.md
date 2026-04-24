@@ -1,67 +1,77 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repository.
 
-## Project Overview
+## Project overview
 
-This is an Obsidian plugin called "YTranscript" that fetches and displays YouTube video transcripts within Obsidian. The plugin allows users to:
-- Extract transcripts from YouTube URLs (either selected text or prompted input)
+Obsidian plugin "YTranscript" — fetches and displays YouTube video transcripts inside Obsidian:
+
+- Extract transcripts from YouTube URLs (selected text or prompt)
 - Display transcripts in a side panel with clickable timestamps
-- Search through transcript content
+- Search transcript content
 - Copy transcript blocks with timestamp links
+- Insert a formatted transcript into a note via command
 
-## Development Commands
+## Development
 
-- `npm run dev` - Build in development mode with watch
-- `npm run build` - TypeScript check + production build
-- `npm test` - Run Jest tests
-- `npm run check-format` - Check code formatting with Prettier
-- `npm run version` - Bump version and update manifest files
+- `npm run dev` — watch build
+- `npm run build` — `tsc -noEmit` + esbuild production bundle
+- `npm test` — Jest
+- `npm run check-format` — Prettier check
+
+Read [STYLE.md](./STYLE.md) before making non-trivial changes.
 
 ## Architecture
 
-The plugin follows Obsidian's plugin architecture with these key components:
+Code is split into three layers. The domain layers (`transcript/`, `youtube/`) have no `obsidian` import. All framework-touching code lives under `obsidian/`. This is load-bearing — don't leak `obsidian` imports into the domain.
 
-### Core Files
-- `src/main.ts` - Main plugin class with commands, settings, and view registration
-- `src/transcript-view.ts` - Custom view for displaying transcripts in workspace
-- `src/youtube-transcript.ts` - InnerTube Player API client that fetches caption tracks
-- `src/api-parser.ts` - XML transcript parsing and video metadata extraction helpers
-- `src/transcript-formatter.ts` - Formats transcript lines into markdown with configurable templates
-- `src/url-detection.ts` - Detects and extracts YouTube URLs from editor text
-- `src/prompt-modal.ts` - Modal for URL input prompt
-- `src/commands/insert-transcript.ts` - Command that inserts a formatted transcript into the active note
-- `src/editor-extensions.ts` - Helpers for reading selection / word boundaries from the editor
+```
+src/
+  transcript/         domain: fetch, parse, format transcripts
+    fetch.ts          InnerTube Player API client; takes an HttpClient
+    parse-xml.ts      caption XML → TranscriptLine[]
+    format.ts         TranscriptResponse → markdown (minimal/standard/rich)
+    blocks.ts         group TranscriptLines into TranscriptBlocks
+    timestamp.ts      ms → "HH:MM:SS"
+    http.ts           HttpClient interface (implemented in obsidian/)
+    types.ts          TranscriptLine / Response / Block / Config / Error
+  youtube/
+    url.ts            YouTube URL validation, extraction, timestamp URL builder
+  obsidian/           framework adapter
+    plugin.ts         YTranscriptPlugin entry + settings tab (esbuild entryPoint)
+    http.ts           obsidianHttp: HttpClient implementation using requestUrl
+    highlight.ts      DOM search highlighter
+    editor-extensions.ts   selection / URL-near-cursor helpers
+    url-text-utils.ts      generic URL-in-line finder (used by editor-extensions)
+    views/
+      transcript-view.ts   side-panel ItemView
+    modals/
+      prompt-modal.ts      URL input modal
+    commands/
+      insert-transcript.ts InsertTranscriptCommand (used by the insert command)
 
-### Utilities
-- `src/url-utils.ts` - URL validation and YouTube URL parsing
-- `src/timestampt-utils.ts` - Timestamp formatting utilities
-- `src/render-utils.ts` - Transcript rendering and text highlighting
-- `src/types.ts` - TypeScript type definitions
+tests/                mirrors src/ layout; uses src/... absolute imports
+```
 
-### Test Files
-- `tests/api-parser.test.ts` - Tests for caption track extraction and XML transcript parsing
-- `tests/transcript-formatter.test.ts` - Tests for markdown formatting of transcript lines
-- `tests/url-detection.test.ts` - Tests for URL detection in editor text
-- `tests/url-utils.test.ts` - Tests for URL parsing utilities
-- `tests/timestampt-utils.test.ts` - Tests for timestamp utilities
+## Transcript fetching flow
 
-### Settings Structure
-The plugin stores settings in `YTranscriptSettings`:
-- `timestampMod`: Frequency of timestamps in transcript blocks
-- `lang`: Preferred transcript language code
-- `country`: Country code for transcript localization
-- `leafUrls`: Array of URLs for open transcript views
+1. Extract the video ID from the URL.
+2. Call `https://www.youtube.com/youtubei/v1/player` (InnerTube) posing as the IOS client. ANDROID stopped returning captions in early 2026; IOS returns caption URLs that work without PO tokens.
+3. Read `captions.playerCaptionsTracklistRenderer.captionTracks`. Pick the best track for the requested language: exact → language prefix → first available.
+4. `GET` the track's `baseUrl` to retrieve transcript XML.
+5. Parse the XML via `parseTranscriptXml` into `TranscriptLine[]` (`text`, `offset` ms, `duration` ms).
 
-### Transcript Fetching Flow
-1. Extract the video ID from the provided YouTube URL
-2. Call YouTube's InnerTube Player API (`/youtubei/v1/player`) posing as the IOS client; ANDROID no longer returns captions
-3. Read `captions.playerCaptionsTracklistRenderer.captionTracks` from the response and pick the best track for the requested language (exact → prefix → first available)
-4. Fetch the caption track's `baseUrl` to get the transcript XML
-5. Parse the XML via `parseTranscriptXml` in `api-parser.ts` into `TranscriptLine` objects with text, duration, and offset
+`fetchTranscript(url, http, config)` takes an `HttpClient` so the domain doesn't depend on Obsidian. Callers pass `obsidianHttp` from `src/obsidian/http.ts`.
 
-### View Management
-- Uses Obsidian's `ItemView` to create custom transcript panels
-- Supports multiple concurrent transcript views
-- Tracks view state through ephemeral state and settings persistence
-- Renders transcript blocks with clickable timestamps that open YouTube at specific times
+## Settings
+
+Stored as `YTranscriptSettings` (defined in `src/obsidian/plugin.ts`):
+
+- `timestampMod` — how many lines per timestamp block (1 = every line)
+- `lang` — preferred caption language code
+- `country` — localization country code
+- `leafUrls` — URLs of open transcript views (persistence)
+
+## View management
+
+`TranscriptView` extends Obsidian's `ItemView`. Multiple concurrent views are supported; view state is tracked via ephemeral state and `leafUrls`. Blocks render with clickable timestamps that open YouTube at the right moment.
