@@ -1,8 +1,8 @@
 import { Modal, ButtonComponent, TextComponent } from "obsidian";
 
 export class PromptModal extends Modal {
-	private resolve: (value: string) => void;
-	private reject: () => void;
+	private resolve!: (value: string) => void;
+	private reject!: () => void;
 	private submitted = false;
 	private value: string;
 	private initialValue?: string;

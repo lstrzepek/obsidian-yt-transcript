@@ -1,7 +1,6 @@
 import {
 	App,
 	Editor,
-	MarkdownView,
 	Plugin,
 	PluginSettingTab,
 	Setting,
@@ -30,8 +29,8 @@ const DEFAULT_SETTINGS: YTranscriptSettings = {
 };
 
 export default class YTranscriptPlugin extends Plugin {
-	settings: YTranscriptSettings;
-	private insertTranscriptCommand: InsertTranscriptCommand;
+	settings!: YTranscriptSettings;
+	private insertTranscriptCommand!: InsertTranscriptCommand;
 
 	async onload() {
 		await this.loadSettings();
@@ -47,7 +46,7 @@ export default class YTranscriptPlugin extends Plugin {
 		this.addCommand({
 			id: "transcript-from-text",
 			name: "Get YouTube transcript from selected url",
-			editorCallback: (editor: Editor, _: MarkdownView) => {
+			editorCallback: (editor: Editor) => {
 				const url = getSelectedText(editor).trim();
 				this.openView(url);
 			},
@@ -71,7 +70,7 @@ export default class YTranscriptPlugin extends Plugin {
 		this.addCommand({
 			id: "insert-youtube-transcript",
 			name: "Insert YouTube transcript",
-			editorCallback: async (editor: Editor, _: MarkdownView) => {
+			editorCallback: async (editor: Editor) => {
 				await this.insertTranscriptCommand.execute(editor);
 			},
 		});
@@ -109,7 +108,6 @@ export default class YTranscriptPlugin extends Plugin {
 
 class YTranscriptSettingTab extends PluginSettingTab {
 	plugin: YTranscriptPlugin;
-	values: Record<string, string>;
 
 	constructor(app: App, plugin: YTranscriptPlugin) {
 		super(app, plugin);
