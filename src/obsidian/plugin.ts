@@ -1,4 +1,11 @@
-import { App, Editor, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
+import {
+	App,
+	Editor,
+	Notice,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+} from "obsidian";
 
 import { fetchTranscript } from "src/youtube/fetch";
 
@@ -80,7 +87,8 @@ export default class YTranscriptPlugin extends Plugin {
 			this.app.workspace.revealLeaf(leaf);
 			leaf.setEphemeralState({ url, transcript });
 		} catch (err) {
-			const message = err instanceof Error ? err.message : "Unknown error";
+			const message =
+				err instanceof Error ? err.message : "Unknown error";
 			new Notice(`Failed to fetch transcript: ${message}`);
 		} finally {
 			notice.hide();
@@ -127,7 +135,9 @@ class YTranscriptSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.timestampMod.toFixed())
 					.onChange(async (value) => {
 						const v = Number.parseInt(value);
-						this.plugin.settings.timestampMod = Number.isNaN(v) ? 5 : v;
+						this.plugin.settings.timestampMod = Number.isNaN(v)
+							? 5
+							: v;
 						await this.plugin.saveSettings();
 					}),
 			);

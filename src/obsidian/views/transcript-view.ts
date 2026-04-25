@@ -2,10 +2,7 @@ import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
 
 import { getTranscriptBlocks } from "src/transcript/blocks";
 import { formatTimestamp } from "src/transcript/timestamp";
-import type {
-	TranscriptBlock,
-	TranscriptResponse,
-} from "src/transcript/types";
+import type { TranscriptBlock, TranscriptResponse } from "src/transcript/types";
 
 import { highlightText } from "../highlight";
 import type YTranscriptPlugin from "../plugin";
@@ -143,9 +140,15 @@ export class TranscriptView extends ItemView {
 			blockContainerEl.appendChild(linkEl);
 			blockContainerEl.appendChild(span);
 
-			blockContainerEl.addEventListener("dragstart", (event: DragEvent) => {
-				event.dataTransfer?.setData("text/html", blockContainerEl.innerHTML);
-			});
+			blockContainerEl.addEventListener(
+				"dragstart",
+				(event: DragEvent) => {
+					event.dataTransfer?.setData(
+						"text/html",
+						blockContainerEl.innerHTML,
+					);
+				},
+			);
 
 			blockContainerEl.addEventListener(
 				"contextmenu",
