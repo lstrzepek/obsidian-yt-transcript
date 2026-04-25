@@ -1,7 +1,10 @@
-import { App, Editor, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, Editor, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
+
+import { fetchTranscript } from "src/youtube/fetch";
 
 import { InsertTranscriptCommand } from "./commands/insert-transcript";
 import { getSelectedText } from "./editor-extensions";
+import { obsidianHttp } from "./http";
 import { PromptModal } from "./modals/prompt-modal";
 import { TRANSCRIPT_TYPE_VIEW, TranscriptView } from "./views/transcript-view";
 
@@ -9,14 +12,12 @@ interface YTranscriptSettings {
 	timestampMod: number;
 	lang: string;
 	country: string;
-	leafUrls: string[];
 }
 
 const DEFAULT_SETTINGS: YTranscriptSettings = {
 	timestampMod: 5,
 	lang: "en",
 	country: "EN",
-	leafUrls: [],
 };
 
 export default class YTranscriptPlugin extends Plugin {
@@ -26,7 +27,6 @@ export default class YTranscriptPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// Initialize commands
 		this.insertTranscriptCommand = new InsertTranscriptCommand(this);
 
 		this.registerView(
@@ -57,7 +57,6 @@ export default class YTranscriptPlugin extends Plugin {
 			},
 		});
 
-		// New mobile-first command
 		this.addCommand({
 			id: "insert-youtube-transcript",
 			name: "Insert YouTube transcript",
@@ -70,14 +69,22 @@ export default class YTranscriptPlugin extends Plugin {
 	}
 
 	async openView(url: string) {
-		const leaf = this.app.workspace.getRightLeaf(false)!;
-		await leaf.setViewState({
-			type: TRANSCRIPT_TYPE_VIEW,
-		});
-		this.app.workspace.revealLeaf(leaf);
-		leaf.setEphemeralState({
-			url,
-		});
+		const notice = new Notice("Fetching transcript…", 0);
+		try {
+			const transcript = await fetchTranscript(url, obsidianHttp, {
+				lang: this.settings.lang,
+				country: this.settings.country,
+			});
+			const leaf = this.app.workspace.getRightLeaf(false)!;
+			await leaf.setViewState({ type: TRANSCRIPT_TYPE_VIEW });
+			this.app.workspace.revealLeaf(leaf);
+			leaf.setEphemeralState({ url, transcript });
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Unknown error";
+			new Notice(`Failed to fetch transcript: ${message}`);
+		} finally {
+			notice.hide();
+		}
 	}
 
 	onunload() {
@@ -120,9 +127,7 @@ class YTranscriptSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.timestampMod.toFixed())
 					.onChange(async (value) => {
 						const v = Number.parseInt(value);
-						this.plugin.settings.timestampMod = Number.isNaN(v)
-							? 5
-							: v;
+						this.plugin.settings.timestampMod = Number.isNaN(v) ? 5 : v;
 						await this.plugin.saveSettings();
 					}),
 			);

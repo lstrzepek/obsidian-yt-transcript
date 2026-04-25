@@ -6,65 +6,66 @@ import type {
 	TranscriptBlock,
 	TranscriptResponse,
 } from "src/transcript/types";
-import { fetchTranscript } from "src/youtube/fetch";
-import { YouTubeTranscriptError } from "src/youtube/types";
 
 import { highlightText } from "../highlight";
-import { obsidianHttp } from "../http";
 import type YTranscriptPlugin from "../plugin";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
+
 export class TranscriptView extends ItemView {
-	isDataLoaded: boolean;
 	plugin: YTranscriptPlugin;
-
-	loaderContainerEl?: HTMLElement;
 	dataContainerEl?: HTMLElement;
-	errorContainerEl?: HTMLElement;
-
 	videoTitle?: string;
-	videoData?: TranscriptResponse[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.isDataLoaded = false;
 	}
 
 	async onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
-		contentEl.createEl("h4", { text: "Transcript" });
+		this.contentEl.empty();
+		this.contentEl.createEl("h4", { text: "Transcript" });
 	}
 
-	async onClose() {
-		const leafIndex = this.getLeafIndex();
-		this.plugin.settings.leafUrls.splice(leafIndex, 1);
-	}
+	async setEphemeralState(state: {
+		url?: string;
+		transcript?: TranscriptResponse;
+	}): Promise<void> {
+		const { url, transcript } = state;
+		if (!url || !transcript) return;
 
-	/**
-	 * Gets the leaf index out of all of the open leaves
-	 * This assumes that the leaf order shouldn't changed, which is a fair assumption
-	 */
-	private getLeafIndex(): number {
-		const leaves = this.app.workspace.getLeavesOfType(TRANSCRIPT_TYPE_VIEW);
-		return leaves.findIndex((leaf) => leaf === this.leaf);
-	}
+		const { timestampMod } = this.plugin.settings;
+		this.videoTitle = transcript.title;
 
-	/**
-	 * Adds a div with loading text to the view content
-	 */
-	private renderLoader() {
-		if (this.loaderContainerEl !== undefined) {
-			this.loaderContainerEl.createEl("div", {
-				text: "Loading...",
+		this.contentEl.empty();
+
+		const headerEl = this.contentEl.createEl("div", {
+			cls: "yt-transcript__header",
+		});
+		headerEl.createEl("div", {
+			text: transcript.title,
+			cls: "yt-transcript__video-title",
+		});
+		const closeBtn = headerEl.createEl("button", {
+			text: "×",
+			cls: "yt-transcript__close-btn",
+			title: "Close transcript",
+		});
+		closeBtn.addEventListener("click", () => this.leaf.detach());
+
+		if (transcript.lines.length === 0) {
+			this.contentEl.createEl("div", {
+				text: "No transcript found for this video.",
 			});
+			return;
 		}
+
+		this.renderSearchInput(url, transcript, timestampMod);
+
+		this.dataContainerEl = this.contentEl.createEl("div");
+		this.renderTranscriptionBlocks(url, transcript, timestampMod, "");
 	}
 
-	/**
-	 * Adds a text input to the view content
-	 */
 	private renderSearchInput(
 		url: string,
 		data: TranscriptResponse,
@@ -76,24 +77,12 @@ export class TranscriptView extends ItemView {
 		searchInputEl.type = "text";
 		searchInputEl.placeholder = "Search...";
 		searchInputEl.addEventListener("input", (e) => {
-			const searchFilter = (e.target as HTMLInputElement).value;
 			this.renderTranscriptionBlocks(
 				url,
 				data,
 				timestampMod,
-				searchFilter,
+				(e.target as HTMLInputElement).value,
 			);
-		});
-	}
-
-	/**
-	 * Adds a div with the video title to the view content
-	 * @param title - the title of the video
-	 */
-	private renderVideoTitle(title: string) {
-		this.contentEl.createEl("div", {
-			text: title,
-			cls: "yt-transcript__video-title",
 		});
 	}
 
@@ -102,22 +91,11 @@ export class TranscriptView extends ItemView {
 			.map((block) => {
 				const { quote, quoteTimeOffset } = block;
 				const href = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
-				const formattedBlock = `[${formatTimestamp(
-					quoteTimeOffset,
-				)}](${href}) ${quote}`;
-
-				return formattedBlock;
+				return `[${formatTimestamp(quoteTimeOffset)}](${href}) ${quote}`;
 			})
 			.join("\n");
 	}
 
-	/**
-	 * Add a transcription blocks to the view content
-	 * @param url - the url of the video
-	 * @param data - the transcript data
-	 * @param timestampMod - the number of seconds between each timestamp
-	 * @param searchValue - the value to search for in the transcript
-	 */
 	private renderTranscriptionBlocks(
 		url: string,
 		data: TranscriptResponse,
@@ -125,185 +103,67 @@ export class TranscriptView extends ItemView {
 		searchValue: string,
 	) {
 		const dataContainerEl = this.dataContainerEl;
-		if (dataContainerEl !== undefined) {
-			//Clear old data before rerendering
-			dataContainerEl.empty();
+		if (dataContainerEl === undefined) return;
 
-			// TODO implement drag and drop
-			// const handleDrag = (quote: string) => {
-			// 	return (event: DragEvent) => {
-			// 		event.dataTransfer?.setData("text/plain", quote);
-			// 	};
-			// };
+		dataContainerEl.empty();
 
-			const transcriptBlocks = getTranscriptBlocks(
-				data.lines,
-				timestampMod,
+		const transcriptBlocks = getTranscriptBlocks(data.lines, timestampMod);
+		const filteredBlocks = transcriptBlocks.filter((block) =>
+			block.quote.toLowerCase().includes(searchValue.toLowerCase()),
+		);
+
+		filteredBlocks.forEach((block) => {
+			const { quote, quoteTimeOffset } = block;
+			const blockContainerEl = createEl("div", {
+				cls: "yt-transcript__transcript-block",
+			});
+			blockContainerEl.draggable = true;
+
+			const linkEl = createEl("a", {
+				text: formatTimestamp(quoteTimeOffset),
+				attr: {
+					href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
+				},
+			});
+
+			const span = dataContainerEl.createEl("span", {
+				text: quote,
+				title: "Click to copy",
+			});
+
+			span.addEventListener("click", (event) => {
+				const target = event.target as HTMLElement;
+				if (target !== null) {
+					navigator.clipboard.writeText(target.textContent ?? "");
+				}
+			});
+
+			if (searchValue !== "") highlightText(span, searchValue);
+
+			blockContainerEl.appendChild(linkEl);
+			blockContainerEl.appendChild(span);
+
+			blockContainerEl.addEventListener("dragstart", (event: DragEvent) => {
+				event.dataTransfer?.setData("text/html", blockContainerEl.innerHTML);
+			});
+
+			blockContainerEl.addEventListener(
+				"contextmenu",
+				(event: MouseEvent) => {
+					const menu = new Menu();
+					menu.addItem((item) =>
+						item.setTitle("Copy all").onClick(() => {
+							navigator.clipboard.writeText(
+								this.formatContentToPaste(url, filteredBlocks),
+							);
+						}),
+					);
+					menu.showAtPosition({ x: event.clientX, y: event.clientY });
+				},
 			);
 
-			//Filter transcript blocks based on
-			const filteredBlocks = transcriptBlocks.filter((block) =>
-				block.quote.toLowerCase().includes(searchValue.toLowerCase()),
-			);
-
-			filteredBlocks.forEach((block) => {
-				const { quote, quoteTimeOffset } = block;
-				const blockContainerEl = createEl("div", {
-					cls: "yt-transcript__transcript-block",
-				});
-				blockContainerEl.draggable = true;
-
-				const linkEl = createEl("a", {
-					text: formatTimestamp(quoteTimeOffset),
-					attr: {
-						href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
-					},
-				});
-
-				const span = dataContainerEl.createEl("span", {
-					text: quote,
-					title: "Click to copy",
-				});
-
-				span.addEventListener("click", (event) => {
-					const target = event.target as HTMLElement;
-					if (target !== null) {
-						navigator.clipboard.writeText(target.textContent ?? "");
-					}
-				});
-
-				//Highlight any match search terms
-				if (searchValue !== "") highlightText(span, searchValue);
-
-				// TODO implement drag and drop
-				// span.setAttr("draggable", "true");
-				// span.addEventListener("dragstart", handleDrag(quote));
-
-				blockContainerEl.appendChild(linkEl);
-				blockContainerEl.appendChild(span);
-				blockContainerEl.addEventListener(
-					"dragstart",
-					(event: DragEvent) => {
-						event.dataTransfer?.setData(
-							"text/html",
-							blockContainerEl.innerHTML,
-						);
-					},
-				);
-
-				blockContainerEl.addEventListener(
-					"contextmenu",
-					(event: MouseEvent) => {
-						const menu = new Menu();
-						menu.addItem((item) =>
-							item.setTitle("Copy all").onClick(() => {
-								navigator.clipboard.writeText(
-									this.formatContentToPaste(
-										url,
-										filteredBlocks,
-									),
-								);
-							}),
-						);
-						menu.showAtPosition({
-							x: event.clientX,
-							y: event.clientY,
-						});
-					},
-				);
-
-				dataContainerEl.appendChild(blockContainerEl);
-			});
-		}
-	}
-
-	/**
-	 * Sets the state of the view
-	 * This is called when the view is loaded
-	 */
-	async setEphemeralState(state: { url: string }): Promise<void> {
-		//If we switch to another view and then switch back, we don't want to reload the data
-		if (this.isDataLoaded) return;
-
-		const leafIndex = this.getLeafIndex();
-
-		//The state.url is not null when we call setEphermeralState from the command
-		//in this case, we will save the url to the settings for future look up
-		if (state.url) {
-			this.plugin.settings.leafUrls[leafIndex] = state.url;
-			await this.plugin.saveSettings();
-		}
-
-		const { lang, country, timestampMod, leafUrls } = this.plugin.settings;
-		const url = leafUrls[leafIndex];
-
-		try {
-			//If it's the first time loading the view, initialize our containers
-			//otherwise, clear the existing data for rerender
-			if (this.loaderContainerEl === undefined) {
-				this.loaderContainerEl = this.contentEl.createEl("div");
-			} else {
-				this.loaderContainerEl.empty();
-			}
-
-			//Clear all containers for rerender and render loader
-			this.renderLoader();
-
-			//Get the youtube video title and transcript at the same time
-			const data = await fetchTranscript(url, obsidianHttp, {
-				lang,
-				country,
-			});
-
-			if (!data) throw Error();
-
-			this.isDataLoaded = true;
-			this.loaderContainerEl.empty();
-
-			this.renderVideoTitle(data.title);
-			this.renderSearchInput(url, data, timestampMod);
-
-			if (this.dataContainerEl === undefined) {
-				this.dataContainerEl = this.contentEl.createEl("div");
-			} else {
-				this.dataContainerEl.empty();
-			}
-
-			//If there was already an error clear it
-			if (this.errorContainerEl !== undefined) {
-				this.errorContainerEl.empty();
-			}
-
-			if (data.lines.length === 0) {
-				this.dataContainerEl.createEl("h4", {
-					text: "No transcript found",
-				});
-				this.dataContainerEl.createEl("div", {
-					text: "Please check if video contains any transcript or try adjust language and country in plugin settings.",
-				});
-			} else {
-				this.renderTranscriptionBlocks(url, data, timestampMod, "");
-			}
-		} catch (err: unknown) {
-			let errorMessage = "";
-			if (err instanceof YouTubeTranscriptError) {
-				errorMessage = err.message;
-			}
-
-			this.loaderContainerEl?.empty();
-
-			if (this.errorContainerEl === undefined) {
-				this.errorContainerEl = this.contentEl.createEl("h5");
-			} else {
-				this.errorContainerEl.empty();
-			}
-			this.errorContainerEl.addClass("yt-transcript__error");
-			this.errorContainerEl.createEl("div", {
-				text: "Error loading transcript",
-				cls: "yt-transcript__error-title",
-			});
-			this.errorContainerEl.createEl("div", { text: errorMessage });
-		}
+			dataContainerEl.appendChild(blockContainerEl);
+		});
 	}
 
 	getViewType(): string {
