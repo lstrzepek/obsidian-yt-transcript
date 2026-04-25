@@ -1,5 +1,5 @@
 import { requestUrl } from "obsidian";
-import type { HttpClient, HttpRequest } from "src/transcript/http";
+import type { HttpClient, HttpRequest } from "src/youtube/http";
 
 export const obsidianHttp: HttpClient = {
 	async request(req: HttpRequest): Promise<string> {

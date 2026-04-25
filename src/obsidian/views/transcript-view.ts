@@ -1,13 +1,16 @@
 import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
 
-import { fetchTranscript, YouTubeTranscriptError } from "src/transcript/fetch";
-import type { TranscriptResponse } from "src/transcript/fetch";
 import { getTranscriptBlocks } from "src/transcript/blocks";
 import { formatTimestamp } from "src/transcript/timestamp";
-import type { TranscriptBlock } from "src/transcript/types";
+import type {
+	TranscriptBlock,
+	TranscriptResponse,
+} from "src/transcript/types";
+import { fetchTranscript } from "src/youtube/fetch";
+import { YouTubeTranscriptError } from "src/youtube/types";
 
-import { obsidianHttp } from "../http";
 import { highlightText } from "../highlight";
+import { obsidianHttp } from "../http";
 import type YTranscriptPlugin from "../plugin";
 
 export const TRANSCRIPT_TYPE_VIEW = "transcript-view";

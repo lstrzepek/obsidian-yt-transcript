@@ -1,14 +1,8 @@
-import { parseTranscriptXml } from "./parse-xml";
-import type { HttpClient } from "./http";
-import type { TranscriptConfig, TranscriptResponse } from "./types";
-import { YouTubeTranscriptError } from "./types";
+import type { TranscriptResponse } from "src/transcript/types";
 
-export { YouTubeTranscriptError } from "./types";
-export type {
-	TranscriptConfig,
-	TranscriptLine,
-	TranscriptResponse,
-} from "./types";
+import type { HttpClient } from "./http";
+import { parseCaptionXml } from "./parse-captions";
+import { YouTubeTranscriptError, type TranscriptConfig } from "./types";
 
 // YouTube's public InnerTube API key.
 const INNERTUBE_API_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
@@ -178,7 +172,7 @@ async function fetchTranscriptFromUrl(
 		throw new Error("Received empty transcript response");
 	}
 
-	return parseTranscriptXml(responseText);
+	return parseCaptionXml(responseText);
 }
 
 function decodeHtml(text: string): string {

@@ -1,12 +1,12 @@
 import { App, Editor, Notice } from "obsidian";
 
-import { fetchTranscript } from "src/transcript/fetch";
 import {
 	formatTranscript,
 	type FormatOptions,
 	type FormatTemplate,
 } from "src/transcript/format";
-import type { TranscriptConfig } from "src/transcript/types";
+import { fetchTranscript } from "src/youtube/fetch";
+import type { TranscriptConfig } from "src/youtube/types";
 import { extractYouTubeUrlFromText, isValidYouTubeUrl } from "src/youtube/url";
 
 import { getSelectedText } from "../editor-extensions";

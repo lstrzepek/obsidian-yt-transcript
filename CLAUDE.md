@@ -25,32 +25,35 @@ Read [STYLE.md](./STYLE.md) before making non-trivial changes.
 
 Code is split into three layers. The domain layers (`transcript/`, `youtube/`) have no `obsidian` import. All framework-touching code lives under `obsidian/`. This is load-bearing — don't leak `obsidian` imports into the domain.
 
+`transcript/` holds source-agnostic shapes and transformations on a transcript. `youtube/` holds everything specific to YouTube as a source: URL handling, the InnerTube fetcher, caption XML parsing, and the YouTube-specific config/error types.
+
 ```
 src/
-  transcript/         domain: fetch, parse, format transcripts
-    fetch.ts          InnerTube Player API client; takes an HttpClient
-    parse-xml.ts      caption XML → TranscriptLine[]
-    format.ts         TranscriptResponse → markdown (minimal/standard/rich)
-    blocks.ts         group TranscriptLines into TranscriptBlocks
-    timestamp.ts      ms → "HH:MM:SS"
-    http.ts           HttpClient interface (implemented in obsidian/)
-    types.ts          TranscriptLine / Response / Block / Config / Error
-  youtube/
-    url.ts            YouTube URL validation, extraction, timestamp URL builder
-  obsidian/           framework adapter
-    plugin.ts         YTranscriptPlugin entry + settings tab (esbuild entryPoint)
-    http.ts           obsidianHttp: HttpClient implementation using requestUrl
-    highlight.ts      DOM search highlighter
-    editor-extensions.ts   selection / URL-near-cursor helpers
-    url-text-utils.ts      generic URL-in-line finder (used by editor-extensions)
+  transcript/                 source-agnostic transcript transformations
+    format.ts                 TranscriptResponse → markdown (minimal/standard/rich)
+    blocks.ts                 group TranscriptLines into TranscriptBlocks
+    timestamp.ts              ms → "HH:MM:SS"
+    types.ts                  TranscriptLine / TranscriptResponse / TranscriptBlock
+  youtube/                    YouTube-specific code
+    url.ts                    URL validation, extraction, timestamp URL builder
+    fetch.ts                  InnerTube Player API client; takes an HttpClient
+    parse-captions.ts         YouTube caption XML → TranscriptLine[]
+    http.ts                   HttpClient interface (implemented in obsidian/)
+    types.ts                  TranscriptConfig / YouTubeTranscriptError
+  obsidian/                   framework adapter
+    plugin.ts                 YTranscriptPlugin entry + settings tab (esbuild entryPoint)
+    http.ts                   obsidianHttp: HttpClient implementation using requestUrl
+    highlight.ts              DOM search highlighter
+    editor-extensions.ts      selection / URL-near-cursor helpers
+    url-text-utils.ts         generic URL-in-line finder (used by editor-extensions)
     views/
-      transcript-view.ts   side-panel ItemView
+      transcript-view.ts      side-panel ItemView
     modals/
-      prompt-modal.ts      URL input modal
+      prompt-modal.ts         URL input modal
     commands/
-      insert-transcript.ts InsertTranscriptCommand (used by the insert command)
+      insert-transcript.ts    InsertTranscriptCommand (used by the insert command)
 
-tests/                mirrors src/ layout; uses src/... absolute imports
+tests/                        mirrors src/ layout; uses src/... absolute imports
 ```
 
 ## Transcript fetching flow
@@ -59,7 +62,7 @@ tests/                mirrors src/ layout; uses src/... absolute imports
 2. Call `https://www.youtube.com/youtubei/v1/player` (InnerTube) posing as the IOS client. ANDROID stopped returning captions in early 2026; IOS returns caption URLs that work without PO tokens.
 3. Read `captions.playerCaptionsTracklistRenderer.captionTracks`. Pick the best track for the requested language: exact → language prefix → first available.
 4. `GET` the track's `baseUrl` to retrieve transcript XML.
-5. Parse the XML via `parseTranscriptXml` into `TranscriptLine[]` (`text`, `offset` ms, `duration` ms).
+5. Parse the XML via `parseCaptionXml` (in `youtube/parse-captions.ts`) into `TranscriptLine[]` (`text`, `offset` ms, `duration` ms).
 
 `fetchTranscript(url, http, config)` takes an `HttpClient` so the domain doesn't depend on Obsidian. Callers pass `obsidianHttp` from `src/obsidian/http.ts`.
 

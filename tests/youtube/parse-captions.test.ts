@@ -1,6 +1,6 @@
-import { parseTranscriptXml } from "src/transcript/parse-xml";
+import { parseCaptionXml } from "src/youtube/parse-captions";
 
-describe("parseTranscriptXml", () => {
+describe("parseCaptionXml", () => {
 	it("should parse <text> tag format", () => {
 		const xml = `<?xml version="1.0" encoding="utf-8" ?>
 			<transcript>
@@ -9,7 +9,7 @@ describe("parseTranscriptXml", () => {
 			</transcript>
 		`;
 
-		const lines = parseTranscriptXml(xml);
+		const lines = parseCaptionXml(xml);
 		expect(lines).toHaveLength(2);
 		expect(lines[0].text).toBe("Hello world");
 		expect(lines[0].offset).toBe(500);
@@ -26,7 +26,7 @@ describe("parseTranscriptXml", () => {
 			</timedtext>
 		`;
 
-		const lines = parseTranscriptXml(xml);
+		const lines = parseCaptionXml(xml);
 		expect(lines).toHaveLength(2);
 		expect(lines[0].text).toBe("Hello world");
 		expect(lines[0].offset).toBe(500);
@@ -43,7 +43,7 @@ describe("parseTranscriptXml", () => {
 			</transcript>
 		`;
 
-		const lines = parseTranscriptXml(xml);
+		const lines = parseCaptionXml(xml);
 		expect(lines[0].text).toBe("Tom & Jerry");
 		expect(lines[1].text).toBe("<script> tag");
 		expect(lines[2].text).toBe('Say "hello"');
@@ -57,7 +57,7 @@ describe("parseTranscriptXml", () => {
 			</transcript>
 		`;
 
-		const lines = parseTranscriptXml(xml);
+		const lines = parseCaptionXml(xml);
 		expect(lines[0].text).toBe("Hello world");
 	});
 
@@ -66,7 +66,7 @@ describe("parseTranscriptXml", () => {
 			<transcript></transcript>
 		`;
 
-		const lines = parseTranscriptXml(xml);
+		const lines = parseCaptionXml(xml);
 		expect(lines).toHaveLength(0);
 	});
 
@@ -79,7 +79,7 @@ describe("parseTranscriptXml", () => {
 			</transcript>
 		`;
 
-		const lines = parseTranscriptXml(xml);
+		const lines = parseCaptionXml(xml);
 		expect(lines).toHaveLength(2);
 		expect(lines[0].text).toBe("Hello");
 		expect(lines[1].text).toBe("World");

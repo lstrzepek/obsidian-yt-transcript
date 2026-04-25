@@ -1,11 +1,11 @@
-import type { TranscriptLine } from "./types";
+import type { TranscriptLine } from "src/transcript/types";
 
 const TEXT_TAG_PATTERN =
 	/<text\s+start="([^"]+)"\s+dur="([^"]+)"[^>]*>([\s\S]*?)<\/text>/g;
 
 const P_TAG_PATTERN = /<p\s+t="(\d+)"\s+d="(\d+)"[^>]*>([\s\S]*?)<\/p>/g;
 
-export function parseTranscriptXml(xmlContent: string): TranscriptLine[] {
+export function parseCaptionXml(xmlContent: string): TranscriptLine[] {
 	const lines: TranscriptLine[] = [];
 
 	for (const match of xmlContent.matchAll(TEXT_TAG_PATTERN)) {
