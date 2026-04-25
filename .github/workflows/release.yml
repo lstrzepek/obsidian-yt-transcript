@@ -1,36 +1,77 @@
 name: Release Obsidian plugin
 
 on:
-    push:
-        tags:
-            - "*"
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version number (e.g. 1.4.0)"
+                required: true
 
 env:
     PLUGIN_NAME: obsidian-ytranscript
 
+permissions:
+    contents: write
+
 jobs:
-    build:
+    release:
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
 
             - uses: actions/setup-node@v4
               with:
                   node-version: 20
                   cache: npm
 
-            - name: Build
+            - name: Bump versions
+              env:
+                  VERSION: ${{ inputs.version }}
               run: |
-                  npm ci
-                  npm run build
-                  mkdir ${{ env.PLUGIN_NAME }}
-                  cp main.js manifest.json styles.css ${{ env.PLUGIN_NAME }}
-                  zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
+                  npm version "$VERSION" --no-git-tag-version
+                  node -e "
+                    const fs = require('fs');
+                    const v = process.env.VERSION;
 
-            - name: Create release
+                    const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+                    manifest.version = v;
+                    fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, '\t') + '\n');
+
+                    const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
+                    versions[v] = manifest.minAppVersion;
+                    fs.writeFileSync('versions.json', JSON.stringify(versions, null, '\t') + '\n');
+                  "
+
+            - name: Build
+              run: npm ci && npm run build
+
+            - name: Commit, tag, and push
+              env:
+                  VERSION: ${{ inputs.version }}
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add package.json manifest.json versions.json
+                  git commit -m "Release $VERSION"
+                  git tag "$VERSION"
+                  git push && git push --tags
+
+            - name: Package plugin
+              env:
+                  VERSION: ${{ inputs.version }}
+              run: |
+                  mkdir "$PLUGIN_NAME"
+                  cp main.js manifest.json styles.css "$PLUGIN_NAME"
+                  zip -r "$PLUGIN_NAME.zip" "$PLUGIN_NAME"
+
+            - name: Create GitHub release
               uses: softprops/action-gh-release@v2
               with:
+                  tag_name: ${{ inputs.version }}
+                  name: ${{ inputs.version }}
                   files: |
                       ${{ env.PLUGIN_NAME }}.zip
                       main.js
