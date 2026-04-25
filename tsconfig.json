@@ -1,17 +1,22 @@
 {
 	"compilerOptions": {
-		"baseUrl": ".",
+		"rootDir": ".",
+		"ignoreDeprecations": "6.0",
 		"inlineSourceMap": true,
 		"inlineSources": true,
 		"module": "ESNext",
 		"target": "ES2020",
 		"allowJs": true,
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"importHelpers": true,
 		"isolatedModules": true,
 		"allowSyntheticDefaultImports": true,
 		"strict": true,
-		"lib": ["DOM", "ES2020"]
+		"lib": ["DOM", "ES2020"],
+		"types": ["jest", "node"],
+		"paths": {
+			"src/*": ["./src/*"]
+		}
 	},
 	"include": ["**/*.ts"]
 }

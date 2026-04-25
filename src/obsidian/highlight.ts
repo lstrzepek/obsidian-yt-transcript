@@ -35,7 +35,9 @@ export function highlightText(el: HTMLElement, searchValue: string): void {
 			matchIdx = lower.indexOf(needle, searchFrom);
 		}
 		if (searchFrom < text.length) {
-			fragment.appendChild(document.createTextNode(text.slice(searchFrom)));
+			fragment.appendChild(
+				document.createTextNode(text.slice(searchFrom)),
+			);
 		}
 		parent.replaceChild(fragment, textNode);
 	}

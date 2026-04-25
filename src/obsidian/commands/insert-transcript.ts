@@ -1,4 +1,4 @@
-import { Editor, Notice } from "obsidian";
+import { App, Editor, Notice } from "obsidian";
 
 import { fetchTranscript } from "src/transcript/fetch";
 import {
@@ -7,10 +7,7 @@ import {
 	type FormatTemplate,
 } from "src/transcript/format";
 import type { TranscriptConfig } from "src/transcript/types";
-import {
-	extractYouTubeUrlFromText,
-	isValidYouTubeUrl,
-} from "src/youtube/url";
+import { extractYouTubeUrlFromText, isValidYouTubeUrl } from "src/youtube/url";
 
 import { getSelectedText } from "../editor-extensions";
 import { obsidianHttp } from "../http";
@@ -22,6 +19,7 @@ export interface InsertTranscriptOptions {
 }
 
 interface CommandContext {
+	app: App;
 	settings?: {
 		lang?: string;
 		country?: string;
@@ -81,7 +79,10 @@ export class InsertTranscriptCommand {
 		const detectedUrl = await this.detectYouTubeUrl(editor);
 
 		try {
-			const prompt = new PromptModal(detectedUrl || undefined);
+			const prompt = new PromptModal(
+				this.context.app,
+				detectedUrl || undefined,
+			);
 			const userUrl = await new Promise<string>((resolve, reject) => {
 				prompt.openAndGetValue(resolve, reject);
 			});
@@ -131,7 +132,9 @@ export class InsertTranscriptCommand {
 		return {
 			template: options.template ?? "standard",
 			timestampMod:
-				options.timestampMod ?? this.context.settings?.timestampMod ?? 5,
+				options.timestampMod ??
+				this.context.settings?.timestampMod ??
+				5,
 		};
 	}
 }

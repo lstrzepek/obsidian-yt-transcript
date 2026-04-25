@@ -1,7 +1,4 @@
-import {
-	extractYouTubeUrlFromText,
-	isValidYouTubeUrl,
-} from "src/youtube/url";
+import { extractYouTubeUrlFromText, isValidYouTubeUrl } from "src/youtube/url";
 
 describe("youtube/url", () => {
 	describe("isValidYouTubeUrl", () => {
@@ -12,24 +9,18 @@ describe("youtube/url", () => {
 				),
 			).toBe(true);
 			expect(
-				isValidYouTubeUrl(
-					"https://youtube.com/watch?v=dQw4w9WgXcQ",
-				),
+				isValidYouTubeUrl("https://youtube.com/watch?v=dQw4w9WgXcQ"),
 			).toBe(true);
 			expect(
-				isValidYouTubeUrl(
-					"http://www.youtube.com/watch?v=dQw4w9WgXcQ",
-				),
+				isValidYouTubeUrl("http://www.youtube.com/watch?v=dQw4w9WgXcQ"),
 			).toBe(true);
 		});
 
 		it("should validate youtu.be URLs", () => {
-			expect(
-				isValidYouTubeUrl("https://youtu.be/dQw4w9WgXcQ"),
-			).toBe(true);
-			expect(
-				isValidYouTubeUrl("http://youtu.be/dQw4w9WgXcQ"),
-			).toBe(true);
+			expect(isValidYouTubeUrl("https://youtu.be/dQw4w9WgXcQ")).toBe(
+				true,
+			);
+			expect(isValidYouTubeUrl("http://youtu.be/dQw4w9WgXcQ")).toBe(true);
 		});
 
 		it("should handle URLs with timestamps", () => {
@@ -39,9 +30,7 @@ describe("youtube/url", () => {
 				),
 			).toBe(true);
 			expect(
-				isValidYouTubeUrl(
-					"https://youtu.be/dQw4w9WgXcQ?t=123",
-				),
+				isValidYouTubeUrl("https://youtu.be/dQw4w9WgXcQ?t=123"),
 			).toBe(true);
 		});
 
@@ -59,31 +48,23 @@ describe("youtube/url", () => {
 		});
 
 		it("should reject non-YouTube URLs", () => {
-			expect(
-				isValidYouTubeUrl("https://www.google.com"),
-			).toBe(false);
-			expect(
-				isValidYouTubeUrl("https://www.vimeo.com/123456"),
-			).toBe(false);
-			expect(
-				isValidYouTubeUrl("https://www.facebook.com"),
-			).toBe(false);
+			expect(isValidYouTubeUrl("https://www.google.com")).toBe(false);
+			expect(isValidYouTubeUrl("https://www.vimeo.com/123456")).toBe(
+				false,
+			);
+			expect(isValidYouTubeUrl("https://www.facebook.com")).toBe(false);
 		});
 
 		it("should handle malformed URLs", () => {
 			expect(isValidYouTubeUrl("not a url")).toBe(false);
 			expect(isValidYouTubeUrl("")).toBe(false);
 			expect(isValidYouTubeUrl("youtube.com")).toBe(false); // no protocol
-			expect(isValidYouTubeUrl("https://youtube")).toBe(
-				false,
-			); // incomplete
+			expect(isValidYouTubeUrl("https://youtube")).toBe(false); // incomplete
 		});
 
 		it("should handle mobile YouTube URLs", () => {
 			expect(
-				isValidYouTubeUrl(
-					"https://m.youtube.com/watch?v=dQw4w9WgXcQ",
-				),
+				isValidYouTubeUrl("https://m.youtube.com/watch?v=dQw4w9WgXcQ"),
 			).toBe(true);
 			expect(
 				isValidYouTubeUrl(
@@ -182,12 +163,8 @@ describe("youtube/url", () => {
 		});
 
 		it("should handle null and undefined", () => {
-			expect(extractYouTubeUrlFromText(null as any)).toBe(
-				null,
-			);
-			expect(
-				extractYouTubeUrlFromText(undefined as any),
-			).toBe(null);
+			expect(extractYouTubeUrlFromText(null as any)).toBe(null);
+			expect(extractYouTubeUrlFromText(undefined as any)).toBe(null);
 		});
 
 		it("should extract URLs with complex parameters", () => {

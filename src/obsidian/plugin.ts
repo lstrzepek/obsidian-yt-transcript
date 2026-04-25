@@ -1,18 +1,9 @@
-import {
-	App,
-	Editor,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-} from "obsidian";
+import { App, Editor, Plugin, PluginSettingTab, Setting } from "obsidian";
 
 import { InsertTranscriptCommand } from "./commands/insert-transcript";
 import { getSelectedText } from "./editor-extensions";
 import { PromptModal } from "./modals/prompt-modal";
-import {
-	TRANSCRIPT_TYPE_VIEW,
-	TranscriptView,
-} from "./views/transcript-view";
+import { TRANSCRIPT_TYPE_VIEW, TranscriptView } from "./views/transcript-view";
 
 interface YTranscriptSettings {
 	timestampMod: number;
@@ -56,7 +47,7 @@ export default class YTranscriptPlugin extends Plugin {
 			id: "transcript-from-prompt",
 			name: "Get YouTube transcript from url prompt",
 			callback: async () => {
-				const prompt = new PromptModal();
+				const prompt = new PromptModal(this.app);
 				const url: string = await new Promise((resolve) =>
 					prompt.openAndGetValue(resolve, () => {}),
 				);

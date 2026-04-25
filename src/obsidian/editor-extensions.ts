@@ -10,9 +10,7 @@ export function getSelectedText(editor: Editor): string {
 	return editor.getSelection();
 }
 
-function getWordBoundaries(
-	editor: Editor,
-): [EditorPosition, EditorPosition] {
+function getWordBoundaries(editor: Editor): [EditorPosition, EditorPosition] {
 	const cursor = editor.getCursor();
 	const lineText = editor.getLine(cursor.line);
 	const urlPosition = getUrlFromText(lineText, cursor.ch);

@@ -1,9 +1,6 @@
 import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
 
-import {
-	fetchTranscript,
-	YouTubeTranscriptError,
-} from "src/transcript/fetch";
+import { fetchTranscript, YouTubeTranscriptError } from "src/transcript/fetch";
 import type { TranscriptResponse } from "src/transcript/fetch";
 import { getTranscriptBlocks } from "src/transcript/blocks";
 import { formatTimestamp } from "src/transcript/timestamp";
@@ -310,7 +307,7 @@ export class TranscriptView extends ItemView {
 		return TRANSCRIPT_TYPE_VIEW;
 	}
 	getDisplayText(): string {
-		return `Video: ${this.videoTitle ?? "No name"}`
+		return `Video: ${this.videoTitle ?? "No name"}`;
 	}
 	getIcon(): string {
 		return "scroll";

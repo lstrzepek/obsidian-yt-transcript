@@ -46,14 +46,10 @@ describe("formatTranscript", () => {
 						{ text: "Third", offset: 2000, duration: 1000 },
 					],
 				};
-				const result = formatTranscript(
-					simpleTranscript,
-					testUrl,
-					{
-						timestampMod: 1,
-						template: "minimal",
-					},
-				);
+				const result = formatTranscript(simpleTranscript, testUrl, {
+					timestampMod: 1,
+					template: "minimal",
+				});
 				expect(result).toBe("First Second Third");
 			});
 
@@ -65,14 +61,10 @@ describe("formatTranscript", () => {
 						{ text: "   Text   ", offset: 1000, duration: 1000 },
 					],
 				};
-				const result = formatTranscript(
-					spacedTranscript,
-					testUrl,
-					{
-						timestampMod: 1,
-						template: "minimal",
-					},
-				);
+				const result = formatTranscript(spacedTranscript, testUrl, {
+					timestampMod: 1,
+					template: "minimal",
+				});
 				expect(result).toBe("Spaced Text");
 			});
 		});
@@ -108,14 +100,10 @@ describe("formatTranscript", () => {
 						{ text: "One hour", offset: 3600000, duration: 1000 },
 					],
 				};
-				const result = formatTranscript(
-					timestampTranscript,
-					testUrl,
-					{
-						timestampMod: 1,
-						template: "standard",
-					},
-				);
+				const result = formatTranscript(timestampTranscript, testUrl, {
+					timestampMod: 1,
+					template: "standard",
+				});
 
 				expect(result).toContain("[00:00]");
 				expect(result).toContain("[01:00]");
@@ -247,14 +235,10 @@ describe("formatTranscript", () => {
 						{ text: "Test content", offset: 0, duration: 1000 },
 					],
 				};
-				const result = formatTranscript(
-					noTitleTranscript,
-					testUrl,
-					{
-						timestampMod: 1,
-						template: "rich",
-					},
-				);
+				const result = formatTranscript(noTitleTranscript, testUrl, {
+					timestampMod: 1,
+					template: "rich",
+				});
 				expect(result).toContain("## YouTube Transcript");
 			});
 
@@ -265,14 +249,10 @@ describe("formatTranscript", () => {
 						{ text: "Test content", offset: 0, duration: 1000 },
 					],
 				};
-				const result = formatTranscript(
-					noTitleTranscript,
-					testUrl,
-					{
-						timestampMod: 1,
-						template: "rich",
-					},
-				);
+				const result = formatTranscript(noTitleTranscript, testUrl, {
+					timestampMod: 1,
+					template: "rich",
+				});
 				expect(result).toContain("## YouTube Transcript");
 			});
 		});
@@ -331,14 +311,10 @@ describe("formatTranscript", () => {
 					title: "Empty Test",
 					lines: [],
 				};
-				const result = formatTranscript(
-					emptyTranscript,
-					testUrl,
-					{
-						timestampMod: 5,
-						template: "standard",
-					},
-				);
+				const result = formatTranscript(emptyTranscript, testUrl, {
+					timestampMod: 5,
+					template: "standard",
+				});
 				expect(result).toBe("");
 			});
 
@@ -349,32 +325,24 @@ describe("formatTranscript", () => {
 						{ text: "Only one line", offset: 0, duration: 2000 },
 					],
 				};
-				const result = formatTranscript(
-					singleLineTranscript,
-					testUrl,
-					{
-						timestampMod: 1,
-						template: "minimal",
-					},
-				);
+				const result = formatTranscript(singleLineTranscript, testUrl, {
+					timestampMod: 1,
+					template: "minimal",
+				});
 				expect(result).toBe("Only one line");
 			});
 
 			it("should handle null transcript response", () => {
-				const result = formatTranscript(
-					null as any,
-					testUrl,
-					{ timestampMod: 5 },
-				);
+				const result = formatTranscript(null as any, testUrl, {
+					timestampMod: 5,
+				});
 				expect(result).toBe("");
 			});
 
 			it("should handle undefined transcript response", () => {
-				const result = formatTranscript(
-					undefined as any,
-					testUrl,
-					{ timestampMod: 5 },
-				);
+				const result = formatTranscript(undefined as any, testUrl, {
+					timestampMod: 5,
+				});
 				expect(result).toBe("");
 			});
 
@@ -388,11 +356,9 @@ describe("formatTranscript", () => {
 			});
 
 			it("should handle empty URL", () => {
-				const result = formatTranscript(
-					mockTranscriptResponse,
-					"",
-					{ timestampMod: 5 },
-				);
+				const result = formatTranscript(mockTranscriptResponse, "", {
+					timestampMod: 5,
+				});
 				expect(result).toContain("Hello world This is a test"); // Should still format text
 			});
 

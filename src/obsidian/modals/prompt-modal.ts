@@ -1,4 +1,4 @@
-import { Modal, ButtonComponent, TextComponent } from "obsidian";
+import { App, ButtonComponent, Modal, TextComponent } from "obsidian";
 
 export class PromptModal extends Modal {
 	private resolve!: (value: string) => void;
@@ -7,7 +7,7 @@ export class PromptModal extends Modal {
 	private value: string;
 	private initialValue?: string;
 
-	constructor(initialValue?: string) {
+	constructor(app: App, initialValue?: string) {
 		super(app);
 		this.initialValue = initialValue;
 		this.value = initialValue || "";
