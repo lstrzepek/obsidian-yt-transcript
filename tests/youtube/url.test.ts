@@ -222,7 +222,7 @@ describe("youtube/url", () => {
 			});
 		});
 
-		it("ignores invalid ranges where end is before start", () => {
+		it("omits endMs when end is before start", () => {
 			expect(
 				extractYouTubeTimeRange(
 					"https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=200&end=100",
