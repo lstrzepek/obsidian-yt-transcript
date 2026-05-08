@@ -1,6 +1,7 @@
-import { buildTimestampUrl } from "src/youtube/url";
+import { buildTimestampUrl, extractYouTubeTimeRange } from "src/youtube/url";
 
 import { getTranscriptBlocks } from "./blocks";
+import { filterTranscriptLinesByRange } from "./range";
 import { formatTimestamp } from "./timestamp";
 import type { TranscriptResponse } from "./types";
 
@@ -20,15 +21,21 @@ export function formatTranscript(
 	if (transcript.lines.length === 0) return "";
 
 	const normalized = normalizeOptions(options);
+	const filteredLines = filterTranscriptLinesByRange(
+		transcript.lines,
+		extractYouTubeTimeRange(url),
+	);
+	if (filteredLines.length === 0) return "";
+	const filteredTranscript = { ...transcript, lines: filteredLines };
 
 	switch (normalized.template) {
 		case "minimal":
-			return formatMinimal(transcript);
+			return formatMinimal(filteredTranscript);
 		case "rich":
-			return formatRich(transcript, url, normalized);
+			return formatRich(filteredTranscript, url, normalized);
 		case "standard":
 		default:
-			return formatStandard(transcript, url, normalized);
+			return formatStandard(filteredTranscript, url, normalized);
 	}
 }
 

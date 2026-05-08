@@ -163,6 +163,23 @@ describe("formatTranscript", () => {
 				expect(result).toContain("&list=PLtest&t=0)");
 				expect(result).toContain("&list=PLtest&t=5)");
 			});
+
+			it("should only include transcript lines within requested time range", () => {
+				const result = formatTranscript(
+					mockTranscriptResponse,
+					`${testUrl}&start=0:05&end=0:11`,
+					{
+						timestampMod: 1,
+						template: "standard",
+					},
+				);
+
+				expect(result).not.toContain("Hello world");
+				expect(result).toContain("of the transcript");
+				expect(result).toContain("formatting system");
+				expect(result).toContain("with multiple lines");
+				expect(result).not.toContain("for comprehensive testing");
+			});
 		});
 
 		describe("rich template", () => {

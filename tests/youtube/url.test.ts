@@ -1,4 +1,8 @@
-import { extractYouTubeUrlFromText, isValidYouTubeUrl } from "src/youtube/url";
+import {
+	extractYouTubeTimeRange,
+	extractYouTubeUrlFromText,
+	isValidYouTubeUrl,
+} from "src/youtube/url";
 
 describe("youtube/url", () => {
 	describe("isValidYouTubeUrl", () => {
@@ -181,6 +185,65 @@ describe("youtube/url", () => {
 				"Bad: youtube.com/watch?v=123 Good: https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 			const result = extractYouTubeUrlFromText(text);
 			expect(result).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+		});
+	});
+
+	describe("extractYouTubeTimeRange", () => {
+		it("extracts start and end from query parameters", () => {
+			expect(
+				extractYouTubeTimeRange(
+					"https://www.youtube.com/watch?v=dQw4w9WgXcQ&start=2:48&end=7:59",
+				),
+			).toEqual({
+				startMs: 168000,
+				endMs: 479000,
+			});
+		});
+
+		it("extracts start from t parameter", () => {
+			expect(
+				extractYouTubeTimeRange(
+					"https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=2m48s",
+				),
+			).toEqual({
+				startMs: 168000,
+				endMs: undefined,
+			});
+		});
+
+		it("extracts start from hash timestamp", () => {
+			expect(
+				extractYouTubeTimeRange(
+					"https://www.youtube.com/watch?v=dQw4w9WgXcQ#t=2:48",
+				),
+			).toEqual({
+				startMs: 168000,
+				endMs: undefined,
+			});
+		});
+
+		it("omits endMs when end is before start", () => {
+			expect(
+				extractYouTubeTimeRange(
+					"https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=200&end=100",
+				),
+			).toEqual({
+				startMs: 200000,
+			});
+		});
+
+		it("treats equal start and end as start-only range", () => {
+			expect(
+				extractYouTubeTimeRange(
+					"https://www.youtube.com/watch?v=dQw4w9WgXcQ&start=100&end=100",
+				),
+			).toEqual({
+				startMs: 100000,
+			});
+		});
+
+		it("returns empty range when URL is invalid", () => {
+			expect(extractYouTubeTimeRange("not a url")).toEqual({});
 		});
 	});
 });
