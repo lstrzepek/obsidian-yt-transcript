@@ -232,6 +232,16 @@ describe("youtube/url", () => {
 			});
 		});
 
+		it("treats equal start and end as start-only range", () => {
+			expect(
+				extractYouTubeTimeRange(
+					"https://www.youtube.com/watch?v=dQw4w9WgXcQ&start=100&end=100",
+				),
+			).toEqual({
+				startMs: 100000,
+			});
+		});
+
 		it("returns empty range when URL is invalid", () => {
 			expect(extractYouTubeTimeRange("not a url")).toEqual({});
 		});

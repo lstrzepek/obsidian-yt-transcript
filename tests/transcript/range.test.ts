@@ -37,4 +37,13 @@ describe("filterTranscriptLinesByRange", () => {
 			}).map((line) => line.text),
 		).toEqual(["line 2", "line 3", "line 4"]);
 	});
+
+	it("includes a line when the requested range falls fully inside that line", () => {
+		expect(
+			filterTranscriptLinesByRange(lines, {
+				startMs: 4500,
+				endMs: 4700,
+			}).map((line) => line.text),
+		).toEqual(["line 3"]);
+	});
 });
