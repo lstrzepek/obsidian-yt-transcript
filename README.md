@@ -14,6 +14,15 @@
 
 This new command is perfect for mobile users and provides a seamless note-taking experience.
 
+### Fetch only a specific transcript segment
+
+You can limit transcript output to a time window by adding start/end query params to the YouTube URL:
+
+- `&start=2:48&end=7:59`
+- `&t=2m48s&end=479`
+
+Works in both the insert command and side panel view.
+
 ## Classic: Side panel workflow (Desktop-Optimized)
 
 1. In editor window select link to Youtube video

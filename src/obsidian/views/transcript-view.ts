@@ -1,8 +1,10 @@
 import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
 
 import { getTranscriptBlocks } from "src/transcript/blocks";
+import { filterTranscriptLinesByRange } from "src/transcript/range";
 import { formatTimestamp } from "src/transcript/timestamp";
 import type { TranscriptBlock, TranscriptResponse } from "src/transcript/types";
+import { buildTimestampUrl, extractYouTubeTimeRange } from "src/youtube/url";
 
 import { highlightText } from "../highlight";
 import type YTranscriptPlugin from "../plugin";
@@ -30,9 +32,16 @@ export class TranscriptView extends ItemView {
 	}): Promise<void> {
 		const { url, transcript } = state;
 		if (!url || !transcript) return;
+		const filteredTranscript: TranscriptResponse = {
+			...transcript,
+			lines: filterTranscriptLinesByRange(
+				transcript.lines,
+				extractYouTubeTimeRange(url),
+			),
+		};
 
 		const { timestampMod } = this.plugin.settings;
-		this.videoTitle = transcript.title;
+		this.videoTitle = filteredTranscript.title;
 
 		this.contentEl.empty();
 
@@ -40,7 +49,7 @@ export class TranscriptView extends ItemView {
 			cls: "yt-transcript__header",
 		});
 		headerEl.createEl("div", {
-			text: transcript.title,
+			text: filteredTranscript.title,
 			cls: "yt-transcript__video-title",
 		});
 		const closeBtn = headerEl.createEl("button", {
@@ -50,17 +59,17 @@ export class TranscriptView extends ItemView {
 		});
 		closeBtn.addEventListener("click", () => this.leaf.detach());
 
-		if (transcript.lines.length === 0) {
+		if (filteredTranscript.lines.length === 0) {
 			this.contentEl.createEl("div", {
 				text: "No transcript found for this video.",
 			});
 			return;
 		}
 
-		this.renderSearchInput(url, transcript, timestampMod);
+		this.renderSearchInput(url, filteredTranscript, timestampMod);
 
 		this.dataContainerEl = this.contentEl.createEl("div");
-		this.renderTranscriptionBlocks(url, transcript, timestampMod, "");
+		this.renderTranscriptionBlocks(url, filteredTranscript, timestampMod, "");
 	}
 
 	private renderSearchInput(
@@ -87,7 +96,7 @@ export class TranscriptView extends ItemView {
 		return blocks
 			.map((block) => {
 				const { quote, quoteTimeOffset } = block;
-				const href = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
+				const href = buildTimestampUrl(url, quoteTimeOffset);
 				return `[${formatTimestamp(quoteTimeOffset)}](${href}) ${quote}`;
 			})
 			.join("\n");
@@ -119,7 +128,7 @@ export class TranscriptView extends ItemView {
 			const linkEl = createEl("a", {
 				text: formatTimestamp(quoteTimeOffset),
 				attr: {
-					href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
+					href: buildTimestampUrl(url, quoteTimeOffset),
 				},
 			});
 
