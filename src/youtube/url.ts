@@ -4,9 +4,13 @@ const YOUTUBE_DOMAINS = new Set([
 	"m.youtube.com",
 	"mobile.youtube.com",
 	"music.youtube.com",
+	"youtube-nocookie.com",
+	"www.youtube-nocookie.com",
 	"youtu.be",
 	"www.youtu.be",
 ]);
+
+const VIDEO_ID_PATTERN = /^[a-zA-Z0-9_-]{11}$/;
 
 export function isValidYouTubeUrl(url: string | null | undefined): boolean {
 	if (!url || typeof url !== "string") return false;
@@ -21,14 +25,19 @@ export function isValidYouTubeUrl(url: string | null | undefined): boolean {
 	const hostname = parsed.hostname.toLowerCase();
 	if (!YOUTUBE_DOMAINS.has(hostname)) return false;
 
-	if (hostname.endsWith("youtube.com")) {
-		return parsed.pathname === "/watch" && parsed.searchParams.has("v");
-	}
 	if (hostname.endsWith("youtu.be")) {
 		const [, videoId] = parsed.pathname.split("/");
-		return !!videoId;
+		return VIDEO_ID_PATTERN.test(videoId ?? "");
 	}
-	return false;
+
+	if (parsed.pathname === "/watch") {
+		return VIDEO_ID_PATTERN.test(parsed.searchParams.get("v") ?? "");
+	}
+
+	const pathMatch = parsed.pathname.match(
+		/^\/(?:embed|shorts|v|live)\/([a-zA-Z0-9_-]{11})(?:\/|$)/,
+	);
+	return pathMatch !== null;
 }
 
 export function extractYouTubeUrlFromText(

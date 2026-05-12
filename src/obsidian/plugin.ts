@@ -7,7 +7,11 @@ import {
 	Setting,
 } from "obsidian";
 
+import type { TranscriptResponse } from "src/transcript/types";
 import { fetchTranscript } from "src/youtube/fetch";
+import type { TranscriptConfig } from "src/youtube/types";
+
+import { isValidYouTubeUrl } from "src/youtube/url";
 
 import { InsertTranscriptCommand } from "./commands/insert-transcript";
 import { getSelectedText } from "./editor-extensions";
@@ -75,13 +79,29 @@ export default class YTranscriptPlugin extends Plugin {
 		this.addSettingTab(new YTranscriptSettingTab(this.app, this));
 	}
 
+	async getTranscript(
+		url: string,
+		config?: Partial<TranscriptConfig>,
+	): Promise<TranscriptResponse> {
+		return fetchTranscript(url, obsidianHttp, {
+			lang: config?.lang ?? this.settings.lang,
+			country: config?.country ?? this.settings.country,
+		});
+	}
+
 	async openView(url: string) {
+		if (!url) {
+			new Notice("No YouTube URL provided.");
+			return;
+		}
+		if (!isValidYouTubeUrl(url)) {
+			new Notice("Not a valid YouTube URL.");
+			return;
+		}
+
 		const notice = new Notice("Fetching transcript…", 0);
 		try {
-			const transcript = await fetchTranscript(url, obsidianHttp, {
-				lang: this.settings.lang,
-				country: this.settings.country,
-			});
+			const transcript = await this.getTranscript(url);
 			const leaf = this.app.workspace.getRightLeaf(false)!;
 			await leaf.setViewState({ type: TRANSCRIPT_TYPE_VIEW });
 			this.app.workspace.revealLeaf(leaf);

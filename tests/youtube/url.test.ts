@@ -85,6 +85,60 @@ describe("youtube/url", () => {
 			expect(isValidYouTubeUrl(null as any)).toBe(false);
 			expect(isValidYouTubeUrl(undefined as any)).toBe(false);
 		});
+
+		it("should accept /embed/ URLs", () => {
+			expect(
+				isValidYouTubeUrl(
+					"https://www.youtube.com/embed/dQw4w9WgXcQ",
+				),
+			).toBe(true);
+			expect(
+				isValidYouTubeUrl(
+					"https://www.youtube.com/embed/dQw4w9WgXcQ?start=10",
+				),
+			).toBe(true);
+		});
+
+		it("should accept /shorts/ URLs", () => {
+			expect(
+				isValidYouTubeUrl(
+					"https://www.youtube.com/shorts/dQw4w9WgXcQ",
+				),
+			).toBe(true);
+		});
+
+		it("should accept /v/ and /live/ URLs", () => {
+			expect(
+				isValidYouTubeUrl("https://www.youtube.com/v/dQw4w9WgXcQ"),
+			).toBe(true);
+			expect(
+				isValidYouTubeUrl(
+					"https://www.youtube.com/live/dQw4w9WgXcQ",
+				),
+			).toBe(true);
+		});
+
+		it("should accept youtube-nocookie.com URLs", () => {
+			expect(
+				isValidYouTubeUrl(
+					"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+				),
+			).toBe(true);
+			expect(
+				isValidYouTubeUrl(
+					"https://youtube-nocookie.com/embed/dQw4w9WgXcQ",
+				),
+			).toBe(true);
+		});
+
+		it("should reject embed/shorts paths without a valid id", () => {
+			expect(
+				isValidYouTubeUrl("https://www.youtube.com/embed/"),
+			).toBe(false);
+			expect(
+				isValidYouTubeUrl("https://www.youtube.com/embed/short"),
+			).toBe(false);
+		});
 	});
 
 	describe("extractYouTubeUrlFromText", () => {
@@ -97,9 +151,11 @@ describe("youtube/url", () => {
 
 		it("should extract first YouTube URL when multiple exist", () => {
 			const text =
-				"First: https://www.youtube.com/watch?v=first123 Second: https://youtu.be/second456";
+				"First: https://www.youtube.com/watch?v=aaaaaaaaaaa Second: https://youtu.be/bbbbbbbbbbb";
 			const result = extractYouTubeUrlFromText(text);
-			expect(result).toBe("https://www.youtube.com/watch?v=first123");
+			expect(result).toBe(
+				"https://www.youtube.com/watch?v=aaaaaaaaaaa",
+			);
 		});
 
 		it("should return null when no YouTube URL found", () => {
