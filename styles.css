@@ -1,24 +1,85 @@
-.yt-transcript__video-title {
-	font-weight: bold;
-	margin-bottom: 20px;
+.yt-transcript__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-4);
+	padding-bottom: var(--size-4-3);
+	margin-bottom: var(--size-4-3);
+	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.yt-transcript__search-input {
-	margin-bottom: 20px;
+.yt-transcript__video-title {
+	font-weight: var(--font-bold);
+	font-size: var(--font-ui-medium);
+	line-height: 1.3;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.yt-transcript__search {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.yt-transcript__search-icon {
+	position: absolute;
+	left: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+	pointer-events: none;
+}
+
+.yt-transcript__search-icon .svg-icon {
+	width: 16px;
+	height: 16px;
+}
+
+input.yt-transcript__search-input[type="text"] {
+	width: 100%;
+	padding-left: 32px;
+}
+
+.yt-transcript__blocks {
+	padding-top: var(--size-4-1);
 }
 
 .yt-transcript__transcript-block {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: 25px;
+	gap: var(--size-4-1);
+	padding: var(--size-4-2);
+	margin-bottom: var(--size-4-2);
+	border-radius: var(--radius-s);
+	border-left: 2px solid transparent;
+	transition: background-color 80ms ease, border-color 80ms ease;
+}
+
+.yt-transcript__transcript-block:hover {
+	background: var(--background-modifier-hover);
+	border-left-color: var(--interactive-accent);
 }
 
 .yt-transcript__transcript-block > a {
-	margin-bottom: 5px;
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	text-decoration: none;
+	font-variant-numeric: tabular-nums;
+}
+
+.yt-transcript__transcript-block > a:hover {
+	color: var(--text-accent);
+	text-decoration: underline;
 }
 
 .yt-transcript__transcript-block > span {
 	cursor: pointer;
+	line-height: 1.5;
 }
 
 .yt-transcript__highlight {
@@ -26,6 +87,12 @@
 	padding: 0 2px;
 	border-radius: 2px;
 	font-weight: bold;
+}
+
+.yt-transcript__empty {
+	color: var(--text-muted);
+	padding: var(--size-4-4);
+	text-align: center;
 }
 
 .yt-transcript__error {

@@ -1,4 +1,4 @@
-import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
+import { ItemView, Menu, WorkspaceLeaf, setIcon } from "obsidian";
 
 import { getTranscriptBlocks } from "src/transcript/blocks";
 import { formatTimestamp } from "src/transcript/timestamp";
@@ -42,37 +42,43 @@ export class TranscriptView extends ItemView {
 		headerEl.createEl("div", {
 			text: transcript.title,
 			cls: "yt-transcript__video-title",
+			attr: { title: transcript.title },
 		});
-		const closeBtn = headerEl.createEl("button", {
-			text: "×",
-			cls: "yt-transcript__close-btn",
-			title: "Close transcript",
-		});
-		closeBtn.addEventListener("click", () => this.leaf.detach());
 
 		if (transcript.lines.length === 0) {
 			this.contentEl.createEl("div", {
 				text: "No transcript found for this video.",
+				cls: "yt-transcript__empty",
 			});
 			return;
 		}
 
-		this.renderSearchInput(url, transcript, timestampMod);
+		this.renderSearchInput(headerEl, url, transcript, timestampMod);
 
-		this.dataContainerEl = this.contentEl.createEl("div");
+		this.dataContainerEl = this.contentEl.createEl("div", {
+			cls: "yt-transcript__blocks",
+		});
 		this.renderTranscriptionBlocks(url, transcript, timestampMod, "");
 	}
 
 	private renderSearchInput(
+		parentEl: HTMLElement,
 		url: string,
 		data: TranscriptResponse,
 		timestampMod: number,
 	) {
-		const searchInputEl = this.contentEl.createEl("input", {
+		const wrapperEl = parentEl.createEl("div", {
+			cls: "yt-transcript__search",
+		});
+		const iconEl = wrapperEl.createEl("span", {
+			cls: "yt-transcript__search-icon",
+		});
+		setIcon(iconEl, "search");
+		const searchInputEl = wrapperEl.createEl("input", {
 			cls: "yt-transcript__search-input",
 		});
 		searchInputEl.type = "text";
-		searchInputEl.placeholder = "Search...";
+		searchInputEl.placeholder = "Search transcript";
 		searchInputEl.addEventListener("input", (e) => {
 			this.renderTranscriptionBlocks(
 				url,
