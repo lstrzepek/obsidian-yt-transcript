@@ -192,15 +192,10 @@ export class TranscriptView extends ItemView {
 			const timestampHref = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
 			const linkEl = createEl("a", {
 				text: formatTimestamp(quoteTimeOffset),
+				cls: "external-link",
 				attr: {
 					href: timestampHref,
-					target: "_blank",
-					rel: "noopener",
 				},
-			});
-			linkEl.addEventListener("click", (event) => {
-				event.preventDefault();
-				window.open(timestampHref, "_blank");
 			});
 
 			const span = dataContainerEl.createEl("span", {
