@@ -1,4 +1,4 @@
-import { ItemView, Menu, WorkspaceLeaf, setIcon } from "obsidian";
+import { ItemView, Menu, Notice, WorkspaceLeaf, setIcon } from "obsidian";
 
 import { getTranscriptBlocks } from "src/transcript/blocks";
 import { formatTimestamp } from "src/transcript/timestamp";
@@ -12,7 +12,12 @@ export const TRANSCRIPT_TYPE_VIEW = "transcript-view";
 export class TranscriptView extends ItemView {
 	plugin: YTranscriptPlugin;
 	dataContainerEl?: HTMLElement;
+	matchCountEl?: HTMLElement;
 	videoTitle?: string;
+	private currentUrl?: string;
+	private currentData?: TranscriptResponse;
+	private currentTimestampMod?: number;
+	private currentSearch = "";
 
 	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
 		super(leaf);
@@ -33,6 +38,10 @@ export class TranscriptView extends ItemView {
 
 		const { timestampMod } = this.plugin.settings;
 		this.videoTitle = transcript.title;
+		this.currentUrl = url;
+		this.currentData = transcript;
+		this.currentTimestampMod = timestampMod;
+		this.currentSearch = "";
 
 		this.contentEl.empty();
 
@@ -53,7 +62,15 @@ export class TranscriptView extends ItemView {
 			return;
 		}
 
-		this.renderSearchInput(headerEl, url, transcript, timestampMod);
+		const actionsEl = headerEl.createEl("div", {
+			cls: "yt-transcript__actions",
+		});
+		this.renderSearchInput(actionsEl, url, transcript, timestampMod);
+		this.renderCopyAllButton(actionsEl);
+
+		this.matchCountEl = headerEl.createEl("div", {
+			cls: "yt-transcript__match-count",
+		});
 
 		this.dataContainerEl = this.contentEl.createEl("div", {
 			cls: "yt-transcript__blocks",
@@ -80,13 +97,53 @@ export class TranscriptView extends ItemView {
 		searchInputEl.type = "text";
 		searchInputEl.placeholder = "Search transcript";
 		searchInputEl.addEventListener("input", (e) => {
-			this.renderTranscriptionBlocks(
-				url,
-				data,
-				timestampMod,
-				(e.target as HTMLInputElement).value,
-			);
+			const value = (e.target as HTMLInputElement).value;
+			this.currentSearch = value;
+			this.renderTranscriptionBlocks(url, data, timestampMod, value);
 		});
+	}
+
+	private renderCopyAllButton(parentEl: HTMLElement) {
+		const btn = parentEl.createEl("button", {
+			cls: "yt-transcript__copy-all clickable-icon",
+			attr: { "aria-label": "Copy all", title: "Copy all" },
+		});
+		setIcon(btn, "copy");
+		btn.addEventListener("click", () => this.copyAll());
+	}
+
+	private updateMatchCount(searchValue: string, count: number) {
+		if (!this.matchCountEl) return;
+		if (searchValue === "") {
+			this.matchCountEl.setText("");
+			this.matchCountEl.hide();
+			return;
+		}
+		this.matchCountEl.show();
+		this.matchCountEl.setText(
+			count === 0
+				? "No matches"
+				: count === 1
+				? "1 match"
+				: `${count} matches`,
+		);
+	}
+
+	private copyAll() {
+		if (!this.currentUrl || !this.currentData || this.currentTimestampMod === undefined) return;
+		const blocks = getTranscriptBlocks(
+			this.currentData.lines,
+			this.currentTimestampMod,
+		).filter((block) =>
+			block.quote.toLowerCase().includes(this.currentSearch.toLowerCase()),
+		);
+		if (blocks.length === 0) return;
+		navigator.clipboard.writeText(this.formatContentToPaste(this.currentUrl, blocks));
+		new Notice(
+			this.currentSearch
+				? `Copied ${blocks.length} matching blocks`
+				: "Copied transcript",
+		);
 	}
 
 	private formatContentToPaste(url: string, blocks: TranscriptBlock[]) {
@@ -115,6 +172,16 @@ export class TranscriptView extends ItemView {
 			block.quote.toLowerCase().includes(searchValue.toLowerCase()),
 		);
 
+		this.updateMatchCount(searchValue, filteredBlocks.length);
+
+		if (searchValue !== "" && filteredBlocks.length === 0) {
+			dataContainerEl.createEl("div", {
+				text: "No matches.",
+				cls: "yt-transcript__empty",
+			});
+			return;
+		}
+
 		filteredBlocks.forEach((block) => {
 			const { quote, quoteTimeOffset } = block;
 			const blockContainerEl = createEl("div", {
@@ -122,11 +189,18 @@ export class TranscriptView extends ItemView {
 			});
 			blockContainerEl.draggable = true;
 
+			const timestampHref = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
 			const linkEl = createEl("a", {
 				text: formatTimestamp(quoteTimeOffset),
 				attr: {
-					href: url + "&t=" + Math.floor(quoteTimeOffset / 1000),
+					href: timestampHref,
+					target: "_blank",
+					rel: "noopener",
 				},
+			});
+			linkEl.addEventListener("click", (event) => {
+				event.preventDefault();
+				window.open(timestampHref, "_blank");
 			});
 
 			const span = dataContainerEl.createEl("span", {
