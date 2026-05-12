@@ -5,6 +5,7 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	type WorkspaceLeaf,
 } from "obsidian";
 
 import type { TranscriptResponse } from "src/transcript/types";
@@ -19,16 +20,20 @@ import { obsidianHttp } from "./http";
 import { PromptModal } from "./modals/prompt-modal";
 import { TRANSCRIPT_TYPE_VIEW, TranscriptView } from "./views/transcript-view";
 
+type OpenLocation = "right-sidebar" | "left-sidebar" | "tab" | "split";
+
 interface YTranscriptSettings {
 	timestampMod: number;
 	lang: string;
 	country: string;
+	openLocation: OpenLocation;
 }
 
 const DEFAULT_SETTINGS: YTranscriptSettings = {
 	timestampMod: 5,
 	lang: "en",
 	country: "EN",
+	openLocation: "right-sidebar",
 };
 
 export default class YTranscriptPlugin extends Plugin {
@@ -102,7 +107,7 @@ export default class YTranscriptPlugin extends Plugin {
 		const notice = new Notice("Fetching transcript…", 0);
 		try {
 			const transcript = await this.getTranscript(url);
-			const leaf = this.app.workspace.getRightLeaf(false)!;
+			const leaf = this.getOpenLeaf();
 			await leaf.setViewState({ type: TRANSCRIPT_TYPE_VIEW });
 			this.app.workspace.revealLeaf(leaf);
 			leaf.setEphemeralState({ url, transcript });
@@ -112,6 +117,21 @@ export default class YTranscriptPlugin extends Plugin {
 			new Notice(`Failed to fetch transcript: ${message}`);
 		} finally {
 			notice.hide();
+		}
+	}
+
+	private getOpenLeaf(): WorkspaceLeaf {
+		const { workspace } = this.app;
+		switch (this.settings.openLocation) {
+			case "left-sidebar":
+				return workspace.getLeftLeaf(false)!;
+			case "tab":
+				return workspace.getLeaf("tab");
+			case "split":
+				return workspace.getLeaf("split", "vertical");
+			case "right-sidebar":
+			default:
+				return workspace.getRightLeaf(false)!;
 		}
 	}
 
@@ -182,6 +202,25 @@ class YTranscriptSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.country)
 					.onChange(async (value) => {
 						this.plugin.settings.country = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Open transcript in")
+			.setDesc("Where to open the transcript view")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions({
+						"right-sidebar": "Right sidebar",
+						"left-sidebar": "Left sidebar",
+						tab: "New tab",
+						split: "Split (right)",
+					})
+					.setValue(this.plugin.settings.openLocation)
+					.onChange(async (value) => {
+						this.plugin.settings.openLocation =
+							value as OpenLocation;
 						await this.plugin.saveSettings();
 					}),
 			);
