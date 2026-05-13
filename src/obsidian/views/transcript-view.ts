@@ -66,6 +66,7 @@ export class TranscriptView extends ItemView {
 			cls: "yt-transcript__actions",
 		});
 		this.renderSearchInput(actionsEl, url, transcript, timestampMod);
+		this.renderIntervalInput(actionsEl);
 		this.renderCopyAllButton(actionsEl);
 
 		this.matchCountEl = headerEl.createEl("div", {
@@ -103,6 +104,42 @@ export class TranscriptView extends ItemView {
 		});
 	}
 
+	private renderIntervalInput(parentEl: HTMLElement) {
+		const wrapperEl = parentEl.createEl("label", {
+			cls: "yt-transcript__interval",
+			attr: { title: "Lines grouped per timestamp" },
+		});
+		wrapperEl.createEl("span", {
+			text: "Every",
+			cls: "yt-transcript__interval-label",
+		});
+		const input = wrapperEl.createEl("input", {
+			cls: "yt-transcript__interval-input",
+		});
+		input.type = "number";
+		input.min = "1";
+		input.step = "1";
+		input.value = String(this.currentTimestampMod ?? 5);
+		input.addEventListener("change", async () => {
+			const parsed = Number.parseInt(input.value, 10);
+			if (Number.isNaN(parsed) || parsed < 1) {
+				input.value = String(this.currentTimestampMod ?? 5);
+				return;
+			}
+			this.currentTimestampMod = parsed;
+			this.plugin.settings.timestampMod = parsed;
+			await this.plugin.saveSettings();
+			if (this.currentUrl && this.currentData) {
+				this.renderTranscriptionBlocks(
+					this.currentUrl,
+					this.currentData,
+					parsed,
+					this.currentSearch,
+				);
+			}
+		});
+	}
+
 	private renderCopyAllButton(parentEl: HTMLElement) {
 		const btn = parentEl.createEl("button", {
 			cls: "yt-transcript__copy-all clickable-icon",
@@ -124,21 +161,30 @@ export class TranscriptView extends ItemView {
 			count === 0
 				? "No matches"
 				: count === 1
-				? "1 match"
-				: `${count} matches`,
+					? "1 match"
+					: `${count} matches`,
 		);
 	}
 
 	private copyAll() {
-		if (!this.currentUrl || !this.currentData || this.currentTimestampMod === undefined) return;
+		if (
+			!this.currentUrl ||
+			!this.currentData ||
+			this.currentTimestampMod === undefined
+		)
+			return;
 		const blocks = getTranscriptBlocks(
 			this.currentData.lines,
 			this.currentTimestampMod,
 		).filter((block) =>
-			block.quote.toLowerCase().includes(this.currentSearch.toLowerCase()),
+			block.quote
+				.toLowerCase()
+				.includes(this.currentSearch.toLowerCase()),
 		);
 		if (blocks.length === 0) return;
-		navigator.clipboard.writeText(this.formatContentToPaste(this.currentUrl, blocks));
+		navigator.clipboard.writeText(
+			this.formatContentToPaste(this.currentUrl, blocks),
+		);
 		new Notice(
 			this.currentSearch
 				? `Copied ${blocks.length} matching blocks`
@@ -189,7 +235,8 @@ export class TranscriptView extends ItemView {
 			});
 			blockContainerEl.draggable = true;
 
-			const timestampHref = url + "&t=" + Math.floor(quoteTimeOffset / 1000);
+			const timestampHref =
+				url + "&t=" + Math.floor(quoteTimeOffset / 1000);
 			const linkEl = createEl("a", {
 				text: formatTimestamp(quoteTimeOffset),
 				cls: "external-link",

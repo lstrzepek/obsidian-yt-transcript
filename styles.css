@@ -36,6 +36,21 @@
 	flex-shrink: 0;
 }
 
+.yt-transcript__interval {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	flex-shrink: 0;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+input.yt-transcript__interval-input[type="number"] {
+	width: 3.5em;
+	padding: var(--size-4-1) var(--size-4-2);
+	text-align: center;
+}
+
 .yt-transcript__match-count {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);

@@ -88,9 +88,7 @@ describe("youtube/url", () => {
 
 		it("should accept /embed/ URLs", () => {
 			expect(
-				isValidYouTubeUrl(
-					"https://www.youtube.com/embed/dQw4w9WgXcQ",
-				),
+				isValidYouTubeUrl("https://www.youtube.com/embed/dQw4w9WgXcQ"),
 			).toBe(true);
 			expect(
 				isValidYouTubeUrl(
@@ -101,9 +99,7 @@ describe("youtube/url", () => {
 
 		it("should accept /shorts/ URLs", () => {
 			expect(
-				isValidYouTubeUrl(
-					"https://www.youtube.com/shorts/dQw4w9WgXcQ",
-				),
+				isValidYouTubeUrl("https://www.youtube.com/shorts/dQw4w9WgXcQ"),
 			).toBe(true);
 		});
 
@@ -112,9 +108,7 @@ describe("youtube/url", () => {
 				isValidYouTubeUrl("https://www.youtube.com/v/dQw4w9WgXcQ"),
 			).toBe(true);
 			expect(
-				isValidYouTubeUrl(
-					"https://www.youtube.com/live/dQw4w9WgXcQ",
-				),
+				isValidYouTubeUrl("https://www.youtube.com/live/dQw4w9WgXcQ"),
 			).toBe(true);
 		});
 
@@ -132,9 +126,9 @@ describe("youtube/url", () => {
 		});
 
 		it("should reject embed/shorts paths without a valid id", () => {
-			expect(
-				isValidYouTubeUrl("https://www.youtube.com/embed/"),
-			).toBe(false);
+			expect(isValidYouTubeUrl("https://www.youtube.com/embed/")).toBe(
+				false,
+			);
 			expect(
 				isValidYouTubeUrl("https://www.youtube.com/embed/short"),
 			).toBe(false);
@@ -153,9 +147,7 @@ describe("youtube/url", () => {
 			const text =
 				"First: https://www.youtube.com/watch?v=aaaaaaaaaaa Second: https://youtu.be/bbbbbbbbbbb";
 			const result = extractYouTubeUrlFromText(text);
-			expect(result).toBe(
-				"https://www.youtube.com/watch?v=aaaaaaaaaaa",
-			);
+			expect(result).toBe("https://www.youtube.com/watch?v=aaaaaaaaaaa");
 		});
 
 		it("should return null when no YouTube URL found", () => {
