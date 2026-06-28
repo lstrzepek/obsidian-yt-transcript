@@ -9,6 +9,7 @@ export type FormatTemplate = "minimal" | "standard" | "rich";
 export interface FormatOptions {
 	timestampMod: number;
 	template?: FormatTemplate;
+	showTimestamps?: boolean;
 }
 
 export function formatTranscript(
@@ -40,14 +41,19 @@ function normalizeOptions(options: FormatOptions): Required<FormatOptions> {
 	return {
 		timestampMod,
 		template: options.template ?? "standard",
+		showTimestamps: options.showTimestamps ?? true,
 	};
 }
 
-function formatMinimal(transcript: TranscriptResponse): string {
+export function joinTranscriptText(transcript: TranscriptResponse): string {
 	return transcript.lines
 		.map((line) => line.text.trim())
 		.filter((text) => text.length > 0)
 		.join(" ");
+}
+
+function formatMinimal(transcript: TranscriptResponse): string {
+	return joinTranscriptText(transcript);
 }
 
 function formatStandard(
@@ -55,6 +61,8 @@ function formatStandard(
 	url: string,
 	options: Required<FormatOptions>,
 ): string {
+	if (!options.showTimestamps) return joinTranscriptText(transcript);
+
 	const blocks = getTranscriptBlocks(transcript.lines, options.timestampMod);
 	if (blocks.length === 0) return "";
 

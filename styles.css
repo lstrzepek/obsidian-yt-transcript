@@ -45,6 +45,21 @@
 	color: var(--text-muted);
 }
 
+.yt-transcript__timestamp-toggle {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	flex-shrink: 0;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.yt-transcript__plain-text {
+	white-space: pre-wrap;
+	line-height: var(--line-height-normal);
+}
+
 input.yt-transcript__interval-input[type="number"] {
 	width: 3.5em;
 	padding: var(--size-4-1) var(--size-4-2);

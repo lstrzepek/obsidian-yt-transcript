@@ -24,6 +24,7 @@ type OpenLocation = "right-sidebar" | "left-sidebar" | "tab" | "split";
 
 interface YTranscriptSettings {
 	timestampMod: number;
+	showTimestamps: boolean;
 	lang: string;
 	country: string;
 	openLocation: OpenLocation;
@@ -31,6 +32,7 @@ interface YTranscriptSettings {
 
 const DEFAULT_SETTINGS: YTranscriptSettings = {
 	timestampMod: 5,
+	showTimestamps: true,
 	lang: "en",
 	country: "EN",
 	openLocation: "right-sidebar",
@@ -166,10 +168,26 @@ class YTranscriptSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Settings for YTranscript" });
 
 		new Setting(containerEl)
+			.setName("Show timestamps")
+			.setDesc(
+				"Show clickable timestamps in the transcript. Turn off for plain continuous text.",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showTimestamps)
+					.onChange(async (value) => {
+						this.plugin.settings.showTimestamps = value;
+						await this.plugin.saveSettings();
+						this.display();
+					}),
+			);
+
+		new Setting(containerEl)
 			.setName("Timestamp interval")
 			.setDesc(
 				"Indicates how often timestamp should occur in text (1 - every line, 10 - every 10 lines)",
 			)
+			.setDisabled(!this.plugin.settings.showTimestamps)
 			.addText((text) =>
 				text
 					.setValue(this.plugin.settings.timestampMod.toFixed())
