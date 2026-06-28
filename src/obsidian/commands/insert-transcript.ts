@@ -16,6 +16,7 @@ import { PromptModal } from "../modals/prompt-modal";
 export interface InsertTranscriptOptions {
 	template?: FormatTemplate;
 	timestampMod?: number;
+	showTimestamps?: boolean;
 }
 
 interface CommandContext {
@@ -24,6 +25,7 @@ interface CommandContext {
 		lang?: string;
 		country?: string;
 		timestampMod?: number;
+		showTimestamps?: boolean;
 	};
 }
 
@@ -135,6 +137,10 @@ export class InsertTranscriptCommand {
 				options.timestampMod ??
 				this.context.settings?.timestampMod ??
 				5,
+			showTimestamps:
+				options.showTimestamps ??
+				this.context.settings?.showTimestamps ??
+				true,
 		};
 	}
 }

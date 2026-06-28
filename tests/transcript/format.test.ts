@@ -305,6 +305,54 @@ describe("formatTranscript", () => {
 			});
 		});
 
+		describe("showTimestamps", () => {
+			const fullText =
+				"Hello world This is a test of the transcript formatting system with multiple lines for comprehensive testing";
+
+			it("should keep timestamps for standard template by default", () => {
+				const result = formatTranscript(
+					mockTranscriptResponse,
+					testUrl,
+					{
+						timestampMod: 5,
+						template: "standard",
+					},
+				);
+				expect(result).toContain("[00:00]");
+			});
+
+			it("should render standard template as continuous text when disabled", () => {
+				const result = formatTranscript(
+					mockTranscriptResponse,
+					testUrl,
+					{
+						timestampMod: 5,
+						template: "standard",
+						showTimestamps: false,
+					},
+				);
+				expect(result).toBe(fullText);
+				expect(result).not.toContain("[00:00]");
+				expect(result).not.toContain("](");
+			});
+
+			it("should keep the rich header but drop timestamps when disabled", () => {
+				const result = formatTranscript(
+					mockTranscriptResponse,
+					testUrl,
+					{
+						timestampMod: 5,
+						template: "rich",
+						showTimestamps: false,
+					},
+				);
+				expect(result).toContain("## Test Video Title");
+				expect(result).toContain("**Source**");
+				expect(result).toContain(fullText);
+				expect(result).not.toContain("[00:00]");
+			});
+		});
+
 		describe("edge cases and error handling", () => {
 			it("should handle empty transcript", () => {
 				const emptyTranscript: TranscriptResponse = {

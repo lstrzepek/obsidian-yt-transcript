@@ -1,6 +1,7 @@
 import { ItemView, Menu, Notice, WorkspaceLeaf, setIcon } from "obsidian";
 
 import { getTranscriptBlocks } from "src/transcript/blocks";
+import { joinTranscriptText } from "src/transcript/format";
 import { formatTimestamp } from "src/transcript/timestamp";
 import type { TranscriptBlock, TranscriptResponse } from "src/transcript/types";
 
@@ -17,6 +18,8 @@ export class TranscriptView extends ItemView {
 	private currentUrl?: string;
 	private currentData?: TranscriptResponse;
 	private currentTimestampMod?: number;
+	private currentShowTimestamps?: boolean;
+	private intervalEl?: HTMLElement;
 	private currentSearch = "";
 
 	constructor(leaf: WorkspaceLeaf, plugin: YTranscriptPlugin) {
@@ -36,11 +39,12 @@ export class TranscriptView extends ItemView {
 		const { url, transcript } = state;
 		if (!url || !transcript) return;
 
-		const { timestampMod } = this.plugin.settings;
+		const { timestampMod, showTimestamps } = this.plugin.settings;
 		this.videoTitle = transcript.title;
 		this.currentUrl = url;
 		this.currentData = transcript;
 		this.currentTimestampMod = timestampMod;
+		this.currentShowTimestamps = showTimestamps;
 		this.currentSearch = "";
 
 		this.contentEl.empty();
@@ -66,6 +70,7 @@ export class TranscriptView extends ItemView {
 			cls: "yt-transcript__actions",
 		});
 		this.renderSearchInput(actionsEl, url, transcript, timestampMod);
+		this.renderTimestampToggle(actionsEl);
 		this.renderIntervalInput(actionsEl);
 		this.renderCopyAllButton(actionsEl);
 
@@ -104,11 +109,46 @@ export class TranscriptView extends ItemView {
 		});
 	}
 
+	private renderTimestampToggle(parentEl: HTMLElement) {
+		const wrapperEl = parentEl.createEl("label", {
+			cls: "yt-transcript__timestamp-toggle",
+			attr: { title: "Show clickable timestamps" },
+		});
+		const input = wrapperEl.createEl("input", {
+			cls: "yt-transcript__timestamp-toggle-input",
+		});
+		input.type = "checkbox";
+		input.checked = this.currentShowTimestamps ?? true;
+		wrapperEl.createEl("span", {
+			text: "Timestamps",
+			cls: "yt-transcript__timestamp-toggle-label",
+		});
+		input.addEventListener("change", async () => {
+			this.currentShowTimestamps = input.checked;
+			this.plugin.settings.showTimestamps = input.checked;
+			await this.plugin.saveSettings();
+			if (this.intervalEl) {
+				if (input.checked) this.intervalEl.show();
+				else this.intervalEl.hide();
+			}
+			if (this.currentUrl && this.currentData) {
+				this.renderTranscriptionBlocks(
+					this.currentUrl,
+					this.currentData,
+					this.currentTimestampMod ?? 5,
+					this.currentSearch,
+				);
+			}
+		});
+	}
+
 	private renderIntervalInput(parentEl: HTMLElement) {
 		const wrapperEl = parentEl.createEl("label", {
 			cls: "yt-transcript__interval",
 			attr: { title: "Lines grouped per timestamp" },
 		});
+		this.intervalEl = wrapperEl;
+		if (!this.currentShowTimestamps) wrapperEl.hide();
 		wrapperEl.createEl("span", {
 			text: "Every",
 			cls: "yt-transcript__interval-label",
@@ -167,12 +207,17 @@ export class TranscriptView extends ItemView {
 	}
 
 	private copyAll() {
-		if (
-			!this.currentUrl ||
-			!this.currentData ||
-			this.currentTimestampMod === undefined
-		)
+		if (!this.currentUrl || !this.currentData) return;
+
+		if (!this.currentShowTimestamps) {
+			const text = joinTranscriptText(this.currentData);
+			if (text === "") return;
+			navigator.clipboard.writeText(text);
+			new Notice("Copied transcript");
 			return;
+		}
+
+		if (this.currentTimestampMod === undefined) return;
 		const blocks = getTranscriptBlocks(
 			this.currentData.lines,
 			this.currentTimestampMod,
@@ -202,6 +247,32 @@ export class TranscriptView extends ItemView {
 			.join("\n");
 	}
 
+	private renderPlainText(
+		containerEl: HTMLElement,
+		data: TranscriptResponse,
+		searchValue: string,
+	) {
+		this.updateMatchCount("", 0);
+
+		const text = joinTranscriptText(data);
+		if (
+			searchValue !== "" &&
+			!text.toLowerCase().includes(searchValue.toLowerCase())
+		) {
+			containerEl.createEl("div", {
+				text: "No matches.",
+				cls: "yt-transcript__empty",
+			});
+			return;
+		}
+
+		const span = containerEl.createEl("div", {
+			text,
+			cls: "yt-transcript__plain-text",
+		});
+		if (searchValue !== "") highlightText(span, searchValue);
+	}
+
 	private renderTranscriptionBlocks(
 		url: string,
 		data: TranscriptResponse,
@@ -212,6 +283,11 @@ export class TranscriptView extends ItemView {
 		if (dataContainerEl === undefined) return;
 
 		dataContainerEl.empty();
+
+		if (!this.currentShowTimestamps) {
+			this.renderPlainText(dataContainerEl, data, searchValue);
+			return;
+		}
 
 		const transcriptBlocks = getTranscriptBlocks(data.lines, timestampMod);
 		const filteredBlocks = transcriptBlocks.filter((block) =>
