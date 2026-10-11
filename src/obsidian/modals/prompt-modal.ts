@@ -33,24 +33,20 @@ export class PromptModal extends Modal {
 	}
 
 	createForm(): void {
-		// Input field
 		const textInput = new TextComponent(this.contentEl);
-		textInput.inputEl.style.width = "100%";
+		textInput.inputEl.addClass("yt-transcript__prompt-input");
 		textInput.onChange((value) => (this.value = value));
 		textInput.inputEl.addEventListener("keydown", (evt: KeyboardEvent) =>
 			this.enterCallback(evt),
 		);
 
-		// Pre-populate with initial value if provided
 		if (this.initialValue) {
 			textInput.setValue(this.initialValue);
-			// Select all text so user can easily replace it
 			textInput.inputEl.select();
 		}
 
 		textInput.inputEl.focus();
 
-		// Submit button
 		const buttonDiv = this.modalEl.createDiv();
 		buttonDiv.addClass("modal-button-container");
 		const submitButton = new ButtonComponent(buttonDiv);
@@ -73,10 +69,10 @@ export class PromptModal extends Modal {
 		this.close();
 	}
 
-	async openAndGetValue(
+	openAndGetValue(
 		resolve: (value: string) => void,
 		reject: () => void,
-	): Promise<void> {
+	): void {
 		this.resolve = resolve;
 		this.reject = reject;
 		this.open();

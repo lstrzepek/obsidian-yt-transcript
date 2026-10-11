@@ -1,0 +1,4 @@
+# Keep LF everywhere so Prettier/.editorconfig agree on Windows checkouts too.
+* text=auto eol=lf
+*.png binary
+*.gif binary

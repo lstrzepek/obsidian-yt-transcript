@@ -1,0 +1,36 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(npm test)",
+			"Bash(npm test:*)",
+			"Bash(npx jest:*)",
+			"Bash(npm run check)",
+			"Bash(npm run lint)",
+			"Bash(npm run lint:*)",
+			"Bash(npm run build)",
+			"Bash(npm run check-format)",
+			"Bash(npm run format)",
+			"Bash(npx eslint:*)",
+			"Bash(npx prettier:*)",
+			"Bash(npx tsc:*)",
+			"Bash(git status:*)",
+			"Bash(git diff:*)",
+			"Bash(git log:*)",
+			"Bash(git show:*)"
+		],
+		"deny": ["Read(./data.json)"]
+	},
+	"hooks": {
+		"PostToolUse": [
+			{
+				"matcher": "Edit|MultiEdit|Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format.mjs\""
+					}
+				]
+			}
+		]
+	}
+}

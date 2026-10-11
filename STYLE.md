@@ -26,7 +26,7 @@ Use **relative paths within the same feature folder**, and the `src/...` absolut
 
 ```ts
 // same folder / nearby
-import { parseTranscriptXml } from "./parse-xml";
+import { parseCaptionXml } from "./parse-captions";
 
 // crossing feature
 import { formatTimestamp } from "src/transcript/timestamp";
@@ -50,7 +50,7 @@ Group imports in this order, separated by blank lines:
 ## Types
 
 - `"strict": true` in `tsconfig.json`. No exceptions.
-- No `any`. If you're bridging an untyped external shape (YouTube's InnerTube response), type the narrow slice you actually read and mark the boundary with a comment.
+- No `any` in `src/` (enforced by ESLint). If you're bridging an untyped external shape (YouTube's InnerTube response), type the narrow slice you actually read and mark the boundary with a comment — see `PlayerResponse` in `youtube/fetch.ts`. Tests may use `as any` to feed deliberately invalid input.
 - Prefer string literal unions over `enum`. Cheaper at runtime, better tree-shaking.
 
 ```ts
@@ -70,29 +70,31 @@ export type FormatTemplate = "minimal" | "standard" | "rich";
 - Don't swallow errors silently. Commands that fail user-visibly must show a `new Notice(msg)`; views should render an error state.
 - Don't `throw "string"` and don't throw generic `Error` from domain code — use `YouTubeTranscriptError`.
 - `catch (e: unknown)`, never `catch (e)` or `catch (e: any)`. Narrow before reading fields.
+- Every promise is awaited or explicitly fire-and-forget with `void`. Event listeners and Obsidian callbacks that expect `void` call an `async` method via `void this.foo()`, and that method handles its own errors (e.g. clipboard writes show a `Notice` on failure).
 
 ## Logging
 
-- No `console.log` in shipped code paths. If you need diagnostics, gate them behind a single `DEBUG` flag read once at module load, or remove them before merge.
+- No `console.*` in `src/` (enforced by ESLint). If you need diagnostics, gate them behind a single `DEBUG` flag read once at module load, or remove them before merge.
 - No emoji in log output.
 
 ## DOM and security
 
-- **Never** assign to `innerHTML`, `outerHTML`, or call `insertAdjacentHTML`. Use `createEl`, `createSpan`, `setText`, `textContent`. Obsidian's plugin review rejects `innerHTML`.
+- **Never** assign to `innerHTML`, `outerHTML`, or call `insertAdjacentHTML` (enforced by ESLint). Use `createEl`, `createSpan`, `setText`, `textContent`. Obsidian's plugin review rejects `innerHTML`. Reading `innerHTML` (e.g. for drag-and-drop data) is fine.
+- Create elements with Obsidian's helpers: `createDiv`, `createSpan`, `createFragment`, `el.createEl(...)`. When you need the document (tree walkers, text nodes), use `el.doc`, never the global `document` — views can live in popout windows.
 - No inline `element.style.x = ...` for anything reusable — put it in `styles.css` under a `yt-transcript__*` class. Inline styles are OK only for one-off dynamic values (e.g. computed positions).
 
 ## Architecture: keep Obsidian out of the domain
 
-Folders `transcript/` and `youtube/` are **pure logic**. They must not `import` from `"obsidian"` or touch DOM.
+Folders `transcript/` and `youtube/` are **pure logic**. They must not `import` from `"obsidian"` or `src/obsidian/`, or touch DOM. ESLint enforces the import half.
 
 The Obsidian adapter lives under `obsidian/` (plugin entry, views, modals, commands, editor helpers). It depends on the domain, never the reverse.
 
-HTTP calls go through an `HttpClient` interface provided by the adapter, so `transcript/fetch.ts` stays framework-free.
+HTTP calls go through the `HttpClient` interface (`youtube/http.ts`), implemented by the adapter (`obsidian/http.ts`), so `youtube/fetch.ts` stays framework-free.
 
 ```
 src/
-  transcript/    # framework-free domain
-  youtube/       # framework-free URL handling
+  transcript/    # framework-free, source-agnostic transcript logic
+  youtube/       # framework-free YouTube source: URLs, InnerTube fetch, caption parsing
   obsidian/      # all framework-touching code
 ```
 
@@ -111,7 +113,7 @@ Write a comment only when the **why** is non-obvious: a workaround for a YouTube
 
 ## Formatting
 
-Prettier + `.editorconfig` are the source of truth. Don't argue about tabs, quotes, or semicolons in reviews — run `npm run check-format`.
+Prettier + `.editorconfig` are the source of truth. Don't argue about tabs, quotes, or semicolons in reviews — run `npm run check-format`. Line endings are LF (`.gitattributes`), including on Windows.
 
 ## Tests
 

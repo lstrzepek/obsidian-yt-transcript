@@ -1,4 +1,4 @@
-import type { TranscriptResponse } from "src/transcript/types";
+import type { TranscriptLine, TranscriptResponse } from "src/transcript/types";
 
 import type { HttpClient } from "./http";
 import { parseCaptionXml } from "./parse-captions";
@@ -21,6 +21,20 @@ const INNERTUBE_CONTEXT = {
 
 const IOS_USER_AGENT =
 	"com.google.ios.youtube/20.10.38 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X)";
+
+// Boundary with InnerTube's untyped JSON: only the fields this module reads.
+interface CaptionTrack {
+	baseUrl: string;
+	languageCode: string;
+}
+
+interface PlayerResponse {
+	playabilityStatus?: { status?: string; reason?: string };
+	videoDetails?: { title?: string };
+	captions?: {
+		playerCaptionsTracklistRenderer?: { captionTracks?: CaptionTrack[] };
+	};
+}
 
 export async function fetchTranscript(
 	url: string,
@@ -53,7 +67,7 @@ export async function fetchTranscript(
 		);
 		if (!captionTrack) {
 			const availableLangs = captionsData.captionTracks
-				.map((t: any) => t.languageCode)
+				.map((t) => t.languageCode)
 				.join(", ");
 			throw new YouTubeTranscriptError(
 				new Error(
@@ -68,7 +82,7 @@ export async function fetchTranscript(
 			title: decodeHtml(title),
 			lines,
 		};
-	} catch (err: any) {
+	} catch (err: unknown) {
 		if (err instanceof YouTubeTranscriptError) {
 			throw err;
 		}
@@ -95,7 +109,7 @@ async function fetchPlayerData(
 	videoId: string,
 	http: HttpClient,
 	config?: TranscriptConfig,
-): Promise<any> {
+): Promise<PlayerResponse> {
 	const context = {
 		...INNERTUBE_CONTEXT,
 		client: {
@@ -117,7 +131,7 @@ async function fetchPlayerData(
 		body,
 	});
 
-	const data = JSON.parse(responseText);
+	const data = JSON.parse(responseText) as PlayerResponse;
 
 	const playabilityStatus = data.playabilityStatus;
 	if (playabilityStatus) {
@@ -135,16 +149,19 @@ async function fetchPlayerData(
 	return data;
 }
 
-function findCaptionTrack(captionTracks: any[], langCode: string): any {
-	let track = captionTracks.find((t: any) => t.languageCode === langCode);
+function findCaptionTrack(
+	captionTracks: CaptionTrack[],
+	langCode: string,
+): CaptionTrack | null {
+	let track = captionTracks.find((t) => t.languageCode === langCode);
 	if (track) return track;
 
-	track = captionTracks.find((t: any) =>
+	track = captionTracks.find((t) =>
 		t.languageCode.startsWith(langCode + "-"),
 	);
 	if (track) return track;
 
-	track = captionTracks.find((t: any) =>
+	track = captionTracks.find((t) =>
 		langCode.startsWith(t.languageCode + "-"),
 	);
 	if (track) return track;
@@ -159,7 +176,7 @@ function findCaptionTrack(captionTracks: any[], langCode: string): any {
 async function fetchTranscriptFromUrl(
 	transcriptUrl: string,
 	http: HttpClient,
-): Promise<any[]> {
+): Promise<TranscriptLine[]> {
 	const responseText = await http.request({
 		url: transcriptUrl,
 		method: "GET",
@@ -183,7 +200,7 @@ function decodeHtml(text: string): string {
 		.replace(/&apos;/g, "'")
 		.replace(/&lt;/g, "<")
 		.replace(/&gt;/g, ">")
-		.replace(/&#(\d+);/g, (_, code) =>
+		.replace(/&#(\d+);/g, (_, code: string) =>
 			String.fromCharCode(parseInt(code, 10)),
 		)
 		.replace(/\\n/g, " ")

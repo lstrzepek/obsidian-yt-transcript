@@ -52,23 +52,23 @@ export default class YTranscriptPlugin extends Plugin {
 
 		this.addCommand({
 			id: "transcript-from-text",
-			name: "Get YouTube transcript from selected url",
+			name: "Get YouTube transcript from selected URL",
 			editorCallback: (editor: Editor) => {
 				const url = getSelectedText(editor).trim();
-				this.openView(url);
+				void this.openView(url);
 			},
 		});
 
 		this.addCommand({
 			id: "transcript-from-prompt",
-			name: "Get YouTube transcript from url prompt",
+			name: "Get YouTube transcript from URL prompt",
 			callback: async () => {
 				const prompt = new PromptModal(this.app);
-				const url: string = await new Promise((resolve) =>
-					prompt.openAndGetValue(resolve, () => {}),
+				const url = await new Promise<string>((resolve) =>
+					prompt.openAndGetValue(resolve, () => resolve("")),
 				);
 				if (url) {
-					this.openView(url);
+					await this.openView(url);
 				}
 			},
 		});
@@ -109,7 +109,7 @@ export default class YTranscriptPlugin extends Plugin {
 			const transcript = await this.getTranscript(url);
 			const leaf = this.getOpenLeaf();
 			await leaf.setViewState({ type: TRANSCRIPT_TYPE_VIEW });
-			this.app.workspace.revealLeaf(leaf);
+			await this.app.workspace.revealLeaf(leaf);
 			leaf.setEphemeralState({ url, transcript });
 		} catch (err) {
 			const message =
@@ -135,16 +135,10 @@ export default class YTranscriptPlugin extends Plugin {
 		}
 	}
 
-	onunload() {
-		this.app.workspace.detachLeavesOfType(TRANSCRIPT_TYPE_VIEW);
-	}
-
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData(),
-		);
+		const saved =
+			(await this.loadData()) as Partial<YTranscriptSettings> | null;
+		this.settings = { ...DEFAULT_SETTINGS, ...saved };
 	}
 
 	async saveSettings() {
@@ -163,7 +157,6 @@ class YTranscriptSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Settings for YTranscript" });
 
 		new Setting(containerEl)
 			.setName("Timestamp interval")

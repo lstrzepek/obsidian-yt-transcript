@@ -17,9 +17,31 @@ Obsidian plugin "YTranscript" — fetches and displays YouTube video transcripts
 - `npm run dev` — watch build
 - `npm run build` — `tsc -noEmit` + esbuild production bundle
 - `npm test` — Jest
-- `npm run check-format` — Prettier check
+- `npm run lint` — ESLint with Obsidian's official rule set (`eslint-plugin-obsidianmd`, the same checks the community scorecard runs on releases) plus our architecture/DOM rules. Warnings fail it. ESLint stays on v9 until the Obsidian plugin supports v10.
+- `npm run check-format` / `npm run format` — Prettier check / fix
+- `npm run check` — all of the above in CI order; this is the gate
 
 Read [STYLE.md](./STYLE.md) before making non-trivial changes.
+
+## Definition of done
+
+Before reporting a task as finished:
+
+1. `npm run check` passes. Don't silence a lint rule to get there — fix the code, or say why the rule is wrong.
+2. Changed behaviour has a test in the mirrored `tests/` file (`src/foo/bar.ts` → `tests/foo/bar.test.ts`). Bug fixes start with a failing test.
+3. If you changed the architecture, the fetch flow, or a convention, update this file or STYLE.md in the same change.
+4. Summarise what changed and anything you couldn't verify (e.g. behaviour inside Obsidian, live YouTube responses).
+
+Edited files under `src/` and `tests/` are auto-formatted by a hook (`.claude/hooks/format.mjs`).
+
+## Working rules
+
+- Don't hit YouTube from tests. `fetchTranscript` takes an `HttpClient` — pass a fake that returns canned responses.
+- Don't commit `main.js` or `data.json` (gitignored; releases are built by `.github/workflows/release.yml`).
+- Don't bump versions or edit `manifest.json`/`versions.json` by hand. Releases run via the manual "Release Obsidian plugin" GitHub workflow (`release.yml`), which bumps, builds, tags and publishes.
+- For anything touching more than one layer, propose a plan before editing.
+- `minAppVersion` is 1.7.2. The linter flags any Obsidian API newer than that; raise `minAppVersion` deliberately rather than suppressing the rule.
+- Don't detach views in `onunload`, and don't add a heading to the settings tab — Obsidian's guidelines reject both.
 
 ## Architecture
 
@@ -73,8 +95,8 @@ Stored as `YTranscriptSettings` (defined in `src/obsidian/plugin.ts`):
 - `timestampMod` — how many lines per timestamp block (1 = every line)
 - `lang` — preferred caption language code
 - `country` — localization country code
-- `leafUrls` — URLs of open transcript views (persistence)
+- `openLocation` — where the transcript view opens (`right-sidebar` / `left-sidebar` / `tab` / `split`)
 
 ## View management
 
-`TranscriptView` extends Obsidian's `ItemView`. Multiple concurrent views are supported; view state is tracked via ephemeral state and `leafUrls`. Blocks render with clickable timestamps that open YouTube at the right moment.
+`TranscriptView` extends Obsidian's `ItemView`. Multiple concurrent views are supported; each view receives its URL and transcript via `setEphemeralState`. Blocks render with clickable timestamps that open YouTube at the right moment.

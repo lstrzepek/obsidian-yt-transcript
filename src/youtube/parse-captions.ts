@@ -45,10 +45,10 @@ function decodeHtmlEntities(text: string): string {
 		.replace(/&quot;/g, '"')
 		.replace(/&#39;/g, "'")
 		.replace(/&apos;/g, "'")
-		.replace(/&#(\d+);/g, (_, code) =>
+		.replace(/&#(\d+);/g, (_, code: string) =>
 			String.fromCharCode(parseInt(code, 10)),
 		)
-		.replace(/&#x([a-fA-F0-9]+);/g, (_, code) =>
+		.replace(/&#x([a-fA-F0-9]+);/g, (_, code: string) =>
 			String.fromCharCode(parseInt(code, 16)),
 		)
 		.replace(/\n/g, " ")

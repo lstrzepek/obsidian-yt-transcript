@@ -29,10 +29,10 @@ export class TranscriptView extends ItemView {
 		this.contentEl.createEl("h4", { text: "Transcript" });
 	}
 
-	async setEphemeralState(state: {
+	setEphemeralState(state: {
 		url?: string;
 		transcript?: TranscriptResponse;
-	}): Promise<void> {
+	}): void {
 		const { url, transcript } = state;
 		if (!url || !transcript) return;
 
@@ -45,35 +45,35 @@ export class TranscriptView extends ItemView {
 
 		this.contentEl.empty();
 
-		const headerEl = this.contentEl.createEl("div", {
+		const headerEl = this.contentEl.createDiv({
 			cls: "yt-transcript__header",
 		});
-		headerEl.createEl("div", {
+		headerEl.createDiv({
 			text: transcript.title,
 			cls: "yt-transcript__video-title",
 			attr: { title: transcript.title },
 		});
 
 		if (transcript.lines.length === 0) {
-			this.contentEl.createEl("div", {
+			this.contentEl.createDiv({
 				text: "No transcript found for this video.",
 				cls: "yt-transcript__empty",
 			});
 			return;
 		}
 
-		const actionsEl = headerEl.createEl("div", {
+		const actionsEl = headerEl.createDiv({
 			cls: "yt-transcript__actions",
 		});
 		this.renderSearchInput(actionsEl, url, transcript, timestampMod);
 		this.renderIntervalInput(actionsEl);
 		this.renderCopyAllButton(actionsEl);
 
-		this.matchCountEl = headerEl.createEl("div", {
+		this.matchCountEl = headerEl.createDiv({
 			cls: "yt-transcript__match-count",
 		});
 
-		this.dataContainerEl = this.contentEl.createEl("div", {
+		this.dataContainerEl = this.contentEl.createDiv({
 			cls: "yt-transcript__blocks",
 		});
 		this.renderTranscriptionBlocks(url, transcript, timestampMod, "");
@@ -85,10 +85,10 @@ export class TranscriptView extends ItemView {
 		data: TranscriptResponse,
 		timestampMod: number,
 	) {
-		const wrapperEl = parentEl.createEl("div", {
+		const wrapperEl = parentEl.createDiv({
 			cls: "yt-transcript__search",
 		});
-		const iconEl = wrapperEl.createEl("span", {
+		const iconEl = wrapperEl.createSpan({
 			cls: "yt-transcript__search-icon",
 		});
 		setIcon(iconEl, "search");
@@ -109,7 +109,7 @@ export class TranscriptView extends ItemView {
 			cls: "yt-transcript__interval",
 			attr: { title: "Lines grouped per timestamp" },
 		});
-		wrapperEl.createEl("span", {
+		wrapperEl.createSpan({
 			text: "Every",
 			cls: "yt-transcript__interval-label",
 		});
@@ -120,24 +120,28 @@ export class TranscriptView extends ItemView {
 		input.min = "1";
 		input.step = "1";
 		input.value = String(this.currentTimestampMod ?? 5);
-		input.addEventListener("change", async () => {
-			const parsed = Number.parseInt(input.value, 10);
-			if (Number.isNaN(parsed) || parsed < 1) {
-				input.value = String(this.currentTimestampMod ?? 5);
-				return;
-			}
-			this.currentTimestampMod = parsed;
-			this.plugin.settings.timestampMod = parsed;
-			await this.plugin.saveSettings();
-			if (this.currentUrl && this.currentData) {
-				this.renderTranscriptionBlocks(
-					this.currentUrl,
-					this.currentData,
-					parsed,
-					this.currentSearch,
-				);
-			}
+		input.addEventListener("change", () => {
+			void this.onIntervalChange(input);
 		});
+	}
+
+	private async onIntervalChange(input: HTMLInputElement): Promise<void> {
+		const parsed = Number.parseInt(input.value, 10);
+		if (Number.isNaN(parsed) || parsed < 1) {
+			input.value = String(this.currentTimestampMod ?? 5);
+			return;
+		}
+		this.currentTimestampMod = parsed;
+		this.plugin.settings.timestampMod = parsed;
+		if (this.currentUrl && this.currentData) {
+			this.renderTranscriptionBlocks(
+				this.currentUrl,
+				this.currentData,
+				parsed,
+				this.currentSearch,
+			);
+		}
+		await this.plugin.saveSettings();
 	}
 
 	private renderCopyAllButton(parentEl: HTMLElement) {
@@ -182,14 +186,24 @@ export class TranscriptView extends ItemView {
 				.includes(this.currentSearch.toLowerCase()),
 		);
 		if (blocks.length === 0) return;
-		navigator.clipboard.writeText(
+		void this.copyText(
 			this.formatContentToPaste(this.currentUrl, blocks),
-		);
-		new Notice(
 			this.currentSearch
 				? `Copied ${blocks.length} matching blocks`
 				: "Copied transcript",
 		);
+	}
+
+	private async copyText(
+		text: string,
+		successMessage?: string,
+	): Promise<void> {
+		try {
+			await navigator.clipboard.writeText(text);
+			if (successMessage) new Notice(successMessage);
+		} catch {
+			new Notice("Could not copy to the clipboard.");
+		}
 	}
 
 	private formatContentToPaste(url: string, blocks: TranscriptBlock[]) {
@@ -221,7 +235,7 @@ export class TranscriptView extends ItemView {
 		this.updateMatchCount(searchValue, filteredBlocks.length);
 
 		if (searchValue !== "" && filteredBlocks.length === 0) {
-			dataContainerEl.createEl("div", {
+			dataContainerEl.createDiv({
 				text: "No matches.",
 				cls: "yt-transcript__empty",
 			});
@@ -230,7 +244,7 @@ export class TranscriptView extends ItemView {
 
 		filteredBlocks.forEach((block) => {
 			const { quote, quoteTimeOffset } = block;
-			const blockContainerEl = createEl("div", {
+			const blockContainerEl = createDiv({
 				cls: "yt-transcript__transcript-block",
 			});
 			blockContainerEl.draggable = true;
@@ -245,7 +259,7 @@ export class TranscriptView extends ItemView {
 				},
 			});
 
-			const span = dataContainerEl.createEl("span", {
+			const span = dataContainerEl.createSpan({
 				text: quote,
 				title: "Click to copy",
 			});
@@ -253,7 +267,7 @@ export class TranscriptView extends ItemView {
 			span.addEventListener("click", (event) => {
 				const target = event.target as HTMLElement;
 				if (target !== null) {
-					navigator.clipboard.writeText(target.textContent ?? "");
+					void this.copyText(target.textContent ?? "");
 				}
 			});
 
@@ -278,8 +292,9 @@ export class TranscriptView extends ItemView {
 					const menu = new Menu();
 					menu.addItem((item) =>
 						item.setTitle("Copy all").onClick(() => {
-							navigator.clipboard.writeText(
+							void this.copyText(
 								this.formatContentToPaste(url, filteredBlocks),
+								"Copied transcript",
 							);
 						}),
 					);

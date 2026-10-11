@@ -7,11 +7,10 @@ on:
                 description: "Version number (e.g. 1.4.0)"
                 required: true
 
-env:
-    PLUGIN_NAME: obsidian-ytranscript
-
 permissions:
     contents: write
+    id-token: write
+    attestations: write
 
 jobs:
     release:
@@ -45,8 +44,16 @@ jobs:
                     fs.writeFileSync('versions.json', JSON.stringify(versions, null, '\t') + '\n');
                   "
 
-            - name: Build
-              run: npm ci && npm run build
+            - name: Check and build
+              run: npm ci && npm run check
+
+            - name: Attest build provenance
+              uses: actions/attest-build-provenance@v2
+              with:
+                  subject-path: |
+                      main.js
+                      manifest.json
+                      styles.css
 
             - name: Commit, tag, and push
               env:
@@ -59,21 +66,12 @@ jobs:
                   git tag "$VERSION"
                   git push && git push --tags
 
-            - name: Package plugin
-              env:
-                  VERSION: ${{ inputs.version }}
-              run: |
-                  mkdir "$PLUGIN_NAME"
-                  cp main.js manifest.json styles.css "$PLUGIN_NAME"
-                  zip -r "$PLUGIN_NAME.zip" "$PLUGIN_NAME"
-
             - name: Create GitHub release
               uses: softprops/action-gh-release@v2
               with:
                   tag_name: ${{ inputs.version }}
                   name: ${{ inputs.version }}
                   files: |
-                      ${{ env.PLUGIN_NAME }}.zip
                       main.js
                       manifest.json
                       styles.css

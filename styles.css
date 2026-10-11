@@ -136,3 +136,7 @@ input.yt-transcript__search-input[type="text"] {
 .yt-transcript__error-title {
 	margin-bottom: 5px;
 }
+
+.yt-transcript__prompt-input {
+	width: 100%;
+}
