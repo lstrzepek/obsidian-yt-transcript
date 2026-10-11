@@ -30,9 +30,6 @@ export default defineConfig([
 				{ args: "none", argsIgnorePattern: "^_" },
 			],
 			"@typescript-eslint/no-explicit-any": "error",
-			// Searchable settings need Obsidian 1.13+ (getSettingDefinitions); deferred until
-			// the settings tab is migrated and testable. Re-enable then.
-			"obsidianmd/settings-tab/prefer-setting-definitions": "off",
 		},
 	},
 	{
@@ -86,6 +83,10 @@ export default defineConfig([
 		rules: {
 			"obsidianmd/no-nodejs-modules": "off",
 			"no-undef": "off",
+			// Rules for plugin runtime code: build output belongs on the console, and
+			// there's no Vault#configDir outside Obsidian.
+			"obsidianmd/rule-custom-message": "off",
+			"obsidianmd/hardcoded-config-path": "off",
 		},
 	},
 	{

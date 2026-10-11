@@ -14,7 +14,7 @@ Obsidian plugin "YTranscript" — fetches and displays YouTube video transcripts
 
 ## Development
 
-- `npm run dev` — watch build
+- `npm run dev` — watch build. If a test vault is configured (`OBSIDIAN_VAULT` or a gitignored `.obsidian-vault` file), every build also copies `main.js`, `manifest.json` and `styles.css` into it — see CONTRIBUTING.md.
 - `npm run build` — `tsc -noEmit` + esbuild production bundle
 - `npm test` — Jest
 - `npm run lint` — ESLint with Obsidian's official rule set (`eslint-plugin-obsidianmd`, the same checks the community scorecard runs on releases) plus our architecture/DOM rules. Warnings fail it. ESLint stays on v9 until the Obsidian plugin supports v10.
@@ -64,6 +64,7 @@ src/
     types.ts                  TranscriptConfig / YouTubeTranscriptError
   obsidian/                   framework adapter
     plugin.ts                 YTranscriptPlugin entry + settings tab (esbuild entryPoint)
+    settings.ts               settings type/defaults, declarative definitions, validation (type-only obsidian import, unit-tested)
     http.ts                   obsidianHttp: HttpClient implementation using requestUrl
     highlight.ts              DOM search highlighter
     editor-extensions.ts      selection / URL-near-cursor helpers
@@ -90,12 +91,19 @@ tests/                        mirrors src/ layout; uses src/... absolute imports
 
 ## Settings
 
-Stored as `YTranscriptSettings` (defined in `src/obsidian/plugin.ts`):
+Stored as `YTranscriptSettings` (defined in `src/obsidian/settings.ts`):
 
 - `timestampMod` — how many lines per timestamp block (1 = every line)
 - `lang` — preferred caption language code
 - `country` — localization country code
 - `openLocation` — where the transcript view opens (`right-sidebar` / `left-sidebar` / `tab` / `split`)
+
+The settings tab has two render paths:
+
+- **Obsidian 1.13+:** `getSettingDefinitions()` returns `buildSettingDefinitions()`; Obsidian renders the tab and indexes every setting for settings search. `display()` is not called.
+- **Obsidian 1.7.2–1.12:** `display()` renders the same settings imperatively.
+
+Both paths share names/descriptions (`SETTING_TEXT`) and write through `setControlValue` → `applySettingValue`, which rejects invalid values. To add a setting: add it to `YTranscriptSettings`, `DEFAULT_SETTINGS`, `SETTING_TEXT`, `buildSettingDefinitions`, `applySettingValue` and `display()` — the tests fail if the definitions and stored keys drift apart.
 
 ## View management
 

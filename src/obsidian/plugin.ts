@@ -5,6 +5,7 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	type SettingDefinitionItem,
 	type WorkspaceLeaf,
 } from "obsidian";
 
@@ -18,23 +19,17 @@ import { InsertTranscriptCommand } from "./commands/insert-transcript";
 import { getSelectedText } from "./editor-extensions";
 import { obsidianHttp } from "./http";
 import { PromptModal } from "./modals/prompt-modal";
+import {
+	applySettingValue,
+	buildSettingDefinitions,
+	DEFAULT_SETTINGS,
+	isOpenLocation,
+	isSettingKey,
+	OPEN_LOCATION_OPTIONS,
+	SETTING_TEXT,
+	type YTranscriptSettings,
+} from "./settings";
 import { TRANSCRIPT_TYPE_VIEW, TranscriptView } from "./views/transcript-view";
-
-type OpenLocation = "right-sidebar" | "left-sidebar" | "tab" | "split";
-
-interface YTranscriptSettings {
-	timestampMod: number;
-	lang: string;
-	country: string;
-	openLocation: OpenLocation;
-}
-
-const DEFAULT_SETTINGS: YTranscriptSettings = {
-	timestampMod: 5,
-	lang: "en",
-	country: "EN",
-	openLocation: "right-sidebar",
-};
 
 export default class YTranscriptPlugin extends Plugin {
 	settings!: YTranscriptSettings;
@@ -154,67 +149,74 @@ class YTranscriptSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	// Obsidian 1.13+: renders the tab declaratively and makes every setting searchable.
+	// When this returns a non-empty array, display() is never called.
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return buildSettingDefinitions();
+	}
+
+	getControlValue(key: string): unknown {
+		return isSettingKey(key) ? this.plugin.settings[key] : undefined;
+	}
+
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		if (applySettingValue(this.plugin.settings, key, value)) {
+			await this.plugin.saveSettings();
+		}
+	}
+
+	// Fallback for Obsidian 1.7.2–1.12, which don't know getSettingDefinitions().
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Timestamp interval")
-			.setDesc(
-				"Indicates how often timestamp should occur in text (1 - every line, 10 - every 10 lines)",
-			)
+			.setName(SETTING_TEXT.timestampMod.name)
+			.setDesc(SETTING_TEXT.timestampMod.desc)
 			.addText((text) =>
 				text
 					.setValue(this.plugin.settings.timestampMod.toFixed())
-					.onChange(async (value) => {
-						const v = Number.parseInt(value);
-						this.plugin.settings.timestampMod = Number.isNaN(v)
-							? 5
-							: v;
-						await this.plugin.saveSettings();
-					}),
+					.onChange((value) =>
+						this.setControlValue(
+							"timestampMod",
+							Number.parseInt(value, 10),
+						),
+					),
 			);
 
 		new Setting(containerEl)
-			.setName("Language")
-			.setDesc("Preferred transcript language")
+			.setName(SETTING_TEXT.lang.name)
+			.setDesc(SETTING_TEXT.lang.desc)
 			.addText((text) =>
 				text
+					.setPlaceholder(DEFAULT_SETTINGS.lang)
 					.setValue(this.plugin.settings.lang)
-					.onChange(async (value) => {
-						this.plugin.settings.lang = value;
-						await this.plugin.saveSettings();
-					}),
+					.onChange((value) => this.setControlValue("lang", value)),
 			);
 
 		new Setting(containerEl)
-			.setName("Country")
-			.setDesc("Preferred transcript country code")
+			.setName(SETTING_TEXT.country.name)
+			.setDesc(SETTING_TEXT.country.desc)
 			.addText((text) =>
 				text
+					.setPlaceholder(DEFAULT_SETTINGS.country)
 					.setValue(this.plugin.settings.country)
-					.onChange(async (value) => {
-						this.plugin.settings.country = value;
-						await this.plugin.saveSettings();
-					}),
+					.onChange((value) =>
+						this.setControlValue("country", value),
+					),
 			);
 
 		new Setting(containerEl)
-			.setName("Open transcript in")
-			.setDesc("Where to open the transcript view")
+			.setName(SETTING_TEXT.openLocation.name)
+			.setDesc(SETTING_TEXT.openLocation.desc)
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOptions({
-						"right-sidebar": "Right sidebar",
-						"left-sidebar": "Left sidebar",
-						tab: "New tab",
-						split: "Split (right)",
-					})
+					.addOptions(OPEN_LOCATION_OPTIONS)
 					.setValue(this.plugin.settings.openLocation)
-					.onChange(async (value) => {
-						this.plugin.settings.openLocation =
-							value as OpenLocation;
-						await this.plugin.saveSettings();
+					.onChange((value) => {
+						if (isOpenLocation(value)) {
+							void this.setControlValue("openLocation", value);
+						}
 					}),
 			);
 	}

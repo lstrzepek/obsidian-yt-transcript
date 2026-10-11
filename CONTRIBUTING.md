@@ -13,7 +13,13 @@ npm ci
 npm run dev      # watch build → main.js
 ```
 
-To try it in Obsidian, symlink or copy `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/ytranscript/` and reload the plugin.
+To try it in Obsidian, point the build at a test vault once — either set `OBSIDIAN_VAULT`, or put the vault path on the first line of a `.obsidian-vault` file in the repo root (gitignored):
+
+```sh
+echo "C:/Users/me/Obsidian/TestVault" > .obsidian-vault
+```
+
+Every build then copies `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/ytranscript/`; in `npm run dev` CSS-only edits are copied too. Reload the plugin to pick up changes, or install the [Hot Reload](https://github.com/pjeby/hot-reload) community plugin — dev builds drop the `.hotreload` marker it looks for. Builds in CI never copy.
 
 ## Before opening a pull request
 
