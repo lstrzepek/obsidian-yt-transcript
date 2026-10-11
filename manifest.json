@@ -1,7 +1,7 @@
 {
 	"id": "ytranscript",
 	"name": "YTranscript",
-	"version": "1.4.0",
+	"version": "1.5.0",
 	"minAppVersion": "1.7.2",
 	"description": "Easily fetch transcription for any YouTube video.",
 	"author": "Łukasz Strzępek",
