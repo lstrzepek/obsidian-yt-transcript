@@ -8,6 +8,8 @@ Use the issue templates on GitHub. For transcript failures, include the video UR
 
 ## Development setup
 
+Use Node 24 (the version in `.nvmrc`; CI reads the same file). With nvm: `nvm use`.
+
 ```sh
 npm ci
 npm run dev      # watch build → main.js

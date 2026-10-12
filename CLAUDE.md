@@ -14,6 +14,8 @@ Obsidian plugin "YTranscript" — fetches and displays YouTube video transcripts
 
 ## Development
 
+Node 24 (`.nvmrc`). CI and the release workflow read the version from `.nvmrc` — change it there, not in the workflows.
+
 - `npm run dev` — watch build. If a test vault is configured (`OBSIDIAN_VAULT` or a gitignored `.obsidian-vault` file), every build also copies `main.js`, `manifest.json` and `styles.css` into it — see CONTRIBUTING.md.
 - `npm run build` — `tsc -noEmit` + esbuild production bundle
 - `npm test` — Jest

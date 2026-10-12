@@ -10,10 +10,10 @@ jobs:
         runs-on: ubuntu-latest
         name: Check code formatting
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v5
+            - uses: actions/setup-node@v5
               with:
-                  node-version: 20
+                  node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
             - run: npm run check-format
@@ -21,10 +21,10 @@ jobs:
         runs-on: ubuntu-latest
         name: Lint
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v5
+            - uses: actions/setup-node@v5
               with:
-                  node-version: 20
+                  node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
             - run: npm run lint
@@ -32,10 +32,10 @@ jobs:
         runs-on: ubuntu-latest
         name: Build project
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v5
+            - uses: actions/setup-node@v5
               with:
-                  node-version: 20
+                  node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
             - run: npm run build
@@ -43,10 +43,10 @@ jobs:
         runs-on: ubuntu-latest
         name: Test project
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v5
+            - uses: actions/setup-node@v5
               with:
-                  node-version: 20
+                  node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
             - run: npm test
